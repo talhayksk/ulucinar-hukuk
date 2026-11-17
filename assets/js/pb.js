@@ -1,0 +1,158 @@
+/**
+ * ULUÇINAR Hukuk & Danışmanlık — minimal PocketBase client.
+ *
+ * No SDK, no dependencies. Every method degrades gracefully: errors return
+ * null/[] and set PB.lastError so callers can distinguish "not found" from
+ * "network failed". Same-origin is the default; ?pb=<url> overrides it.
+ */
+(function (global) {
+  "use strict";
+
+  var config = global.SITE_CONFIG || {};
+  var TIMEOUT_MS = 6000;
+
+  var PB = {
+    lastError: false
+  };
+
+  function normalizeBase(value) {
+    return String(value || "").trim().replace(/\/+$/, "");
+  }
+
+  function baseUrl() {
+    try {
+      var override = new URLSearchParams(global.location.search).get("pb");
+      if (override) { return normalizeBase(override); }
+    } catch (err) { /* ignore malformed URLs */ }
+    return normalizeBase(config.pocketbaseUrl);
+  }
+
+  function collection(name, fallback) {
+    var map = config.collections || {};
+    return map[name] || fallback;
+  }
+
+  function endpoint(path) {
+    return baseUrl() + path;
+  }
+
+  function request(path, params) {
+    PB.lastError = false;
+
+    var url = endpoint(path);
+    if (params) {
+      var query = new URLSearchParams(params).toString();
+      if (query) { url += (url.indexOf("?") === -1 ? "?" : "&") + query; }
+    }
+
+    var controller = typeof global.AbortController === "function" ? new global.AbortController() : null;
+    var timer = global.setTimeout(function () {
+      if (controller) { controller.abort(); }
+    }, TIMEOUT_MS);
+
+    var options = {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+      credentials: "same-origin"
+    };
+    if (controller) { options.signal = controller.signal; }
+
+    return global.fetch(url, options)
+      .then(function (response) {
+        if (!response.ok) {
+          PB.lastError = true;
+          return null;
+        }
+        return response.json().catch(function () {
+          PB.lastError = true;
+          return null;
+        });
+      })
+      .catch(function () {
+        PB.lastError = true;
+        return null;
+      })
+      .then(function (data) {
+        global.clearTimeout(timer);
+        return data;
+      });
+  }
+
+  function escapeFilterValue(value) {
+    return String(value).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+  }
+
+  /**
+   * First site_settings record, or null when the request fails / is empty.
+   */
+  PB.getSettings = function () {
+    var name = collection("settings", "site_settings");
+    return request("/api/collections/" + encodeURIComponent(name) + "/records", {
+      perPage: "1"
+    }).then(function (data) {
+      if (!data || !Array.isArray(data.items) || !data.items.length) { return null; }
+      return data.items[0];
+    });
+  };
+
+  /**
+   * Latest published articles. Returns [] on any failure.
+   */
+  PB.getArticles = function (limit) {
+    var amount = Number(limit) || Number(config.articlesPerPage) || 3;
+    var name = collection("articles", "articles");
+
+    return request("/api/collections/" + encodeURIComponent(name) + "/records", {
+      filter: "(status='published')",
+      sort: "-published_at",
+      perPage: String(amount)
+    }).then(function (data) {
+      if (!data || !Array.isArray(data.items)) { return []; }
+      return data.items;
+    });
+  };
+
+  /**
+   * One article by slug, or null when it does not exist / the request fails.
+   * Check PB.lastError to tell a network failure from an empty result.
+   */
+  PB.getArticleBySlug = function (slug) {
+    if (!slug) { return Promise.resolve(null); }
+
+    var name = collection("articles", "articles");
+    var filter = "(slug='" + escapeFilterValue(slug) + "')";
+
+    return request("/api/collections/" + encodeURIComponent(name) + "/records", {
+      filter: filter,
+      perPage: "1"
+    }).then(function (data) {
+      if (!data || !Array.isArray(data.items) || !data.items.length) { return null; }
+      return data.items[0];
+    });
+  };
+
+  /**
+   * Absolute or root-relative URL for a PocketBase file field.
+   */
+  PB.fileUrl = function (record, filename) {
+    if (!record || !filename) { return ""; }
+
+    var collectionId = record.collectionId || record.collectionName || collection("articles", "articles");
+    var id = record.id;
+    if (!collectionId || !id) { return ""; }
+
+    return baseUrl() + "/api/files/" +
+      encodeURIComponent(collectionId) + "/" +
+      encodeURIComponent(id) + "/" +
+      encodeURIComponent(filename);
+  };
+
+  PB.hasError = function () {
+    return PB.lastError;
+  };
+
+  PB.baseUrl = baseUrl;
+
+  global.PB = PB;
+})(window);

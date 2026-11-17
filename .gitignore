@@ -1,0 +1,24 @@
+# OpenCode Team internal workspace (artifacts, memory, run checkpoints)
+.team/
+
+# PocketBase runtime data and generated public copy
+pocketbase/pb_data/
+pocketbase/pb_public/
+pocketbase/backups/
+
+# PocketBase server binary (download separately, see README)
+pocketbase/pocketbase
+
+# Legacy / reference material, not part of this product
+lawyer_sablon.html
+requirements.txt
+
+# Local test probes
+probe.html
+
+# Local environment and OS noise
+.env
+.env.*
+*.log
+__pycache__/
+.DS_Store

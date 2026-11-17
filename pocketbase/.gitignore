@@ -1,0 +1,6 @@
+# Local PocketBase runtime state - never commit.
+pb_data/
+backups/
+
+# Generated copy of the static site (see scripts/pocketbase-sync-public.sh).
+pb_public/
