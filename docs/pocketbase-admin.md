@@ -106,7 +106,7 @@ Yayın kontrol listesi:
 - [ ] `title` ve `slug` dolu, slug benzersiz ve küçük harfli
 - [ ] `excerpt` 1–2 cümle
 - [ ] `body` başlık/paragraf yapısıyla okunuyor; istenmeyen HTML yok
-- [ ] Kapak görseli yüklü veya `cover_url` çalışıyor (5 MB sınırı)
+- [ ] Kapak görseli `cover` alanına yüklendi (5 MB sınırı)
 - [ ] `published_at` doğru
 - [ ] `status = published`
 - [ ] `seo_title` / `seo_description` dolduruldu
@@ -123,23 +123,23 @@ kullanır. Kayıt sayısı 1'den fazlaysa fazlalıkları silin.
 
 | Sayfadaki yer | Alan | Durum |
 |---|---|---|
-| Üst bilgi, iletişim ve footer telefon/e-posta/adres/saat | `phone`, `email`, `address`, `working_hours` | Sitede aktif |
+| Üst bilgi, iletişim ve footer telefon/e-posta/adres/saat | `phone`, `email`, `address`, `working_hours` | Sitede aktif (e-posta ve saat yer tutucu) |
 | WhatsApp butonları | `whatsapp` | Sitede aktif (`https://wa.me/...` tam adres) |
 | Footer kısa açıklama | `tagline` | Sitede aktif |
-| Hero küçük notu | `hero_note` | Şu an hero açıklama paragrafında kullanılıyor; üst etikete taşınması sürüyor |
-| Hero ana başlık | `hero_title` | API hazır; sayfaya bağlanması sürüyor |
-| Hero açıklama paragrafı | `hero_lead` | API hazır; sayfaya bağlanması sürüyor |
-| Hakkımızda başlığı | `about_title` | API hazır; sayfaya bağlanması sürüyor |
-| Hakkımızda giriş paragrafı | `about_lead` | API hazır; sayfaya bağlanması sürüyor |
-| Hakkımızda metinleri | `about_body` (sanitize edilmiş HTML) | API hazır; sayfaya bağlanması sürüyor |
-| Güven şeridindeki 4 sayı | `stats` (JSON) | API hazır; sayfaya bağlanması sürüyor |
-| 3 ilke kartı | `values` (JSON) | API hazır; sayfaya bağlanması sürüyor |
-| Footer yasal not | `footer_note` | API hazır; sayfaya bağlanması sürüyor |
-| Ana sayfa `<title>` | `seo_title` | Veri hazır; statik HTML bağlanması sürüyor |
-| Ana sayfa meta açıklama | `seo_description` | Veri hazır; statik HTML bağlanması sürüyor |
-| Canonical / OG / sitemap adresi | `site_url` | Sunucu tarafında kullanılıyor |
+| Hero küçük notu | `hero_note` | Sitede aktif |
+| Hero ana başlık | `hero_title` | Sitede aktif (düz metin) |
+| Hero açıklama paragrafı | `hero_lead` | Sitede aktif |
+| Hakkımızda başlığı | `about_title` | Sitede aktif |
+| Hakkımızda giriş paragrafı | `about_lead` | Sitede aktif |
+| Hakkımızda metinleri | `about_body` (HTML) | Sitede aktif |
+| Güven şeridindeki 4 sayı | `stats` (JSON) | Sitede aktif (değerler yer tutucu) |
+| 3 ilke kartı | `values` (JSON) | Sitede aktif |
+| Footer yasal not | `footer_note` | Sitede aktif |
+| Ana sayfa `<title>` | `seo_title` | Sitede aktif |
+| Ana sayfa meta açıklama | `seo_description` | Sitede aktif |
+| Canonical / OG / sitemap adresi | `site_url` | Sunucu tarafında kullanılıyor (alan adı yer tutucu) |
 | Sosyal profiller | `socials`, `same_as` | Bağlantılar; gerçek adresler girilmeli |
-| Google doğrulama | `google_site_verification` | Search Console kodu |
+| Google doğrulama | `google_site_verification` | Search Console kodu (henüz doğrulanmadı) |
 
 ### Alan listesi
 
@@ -148,15 +148,15 @@ kullanır. Kayıt sayısı 1'den fazlaysa fazlalıkları silin.
 | `firm_name` | Büro adı (zorunlu) |
 | `tagline` | Kısa slogan |
 | `phone` | Telefon. `+905019436341` gibi boşluksuz yazın; site görünümü kendisi biçimlendirir. |
-| `whatsapp` | WhatsApp bağlantısı: `https://wa.me/905XXXXXXXXX` |
-| `email` | İletişim e-postası |
-| `address` | Açık adres (tek satır veya virgülle) |
-| `working_hours` | Çalışma saatleri |
+| `whatsapp` | WhatsApp bağlantısı: `https://wa.me/905019436341` |
+| `email` | İletişim e-postası (şu an `info@ulucinar.av.tr` yer tutucu) |
+| `address` | Açık adres: `Karabaş Mh. Cumhuriyet Blv. No:177/2, İzmit / KOCAELİ` |
+| `working_hours` | Çalışma saatleri (şu an yer tutucu) |
 | `socials` | JSON: `{"instagram":"https://...","linkedin":"https://..."}` |
-| `hero_note` | Hero küçük notu (şu an açıklama paragrafında) |
+| `hero_note` | Hero üstündeki kısa etiket |
 | `hero_title` / `hero_lead` | Hero başlığı ve açıklaması (düz metin) |
 | `about_title` / `about_lead` | Hakkımızda başlığı ve giriş paragrafı |
-| `about_body` | Hakkımızda HTML metni (bağlantı sürüyor; sade HTML kullanın) |
+| `about_body` | Hakkımızda HTML metni |
 | `stats` | JSON dizi: `[{"value":"25+","label":"Yıllık deneyim"}]` |
 | `values` | JSON dizi: `[{"title":"Mesleki Sır","text":"..."}]` |
 | `footer_note` | Footer yasal not |
@@ -212,12 +212,11 @@ Formu göndermek için ziyaretçinin KVKK kutusunu işaretlemesi zorunludur:
 Form gönderimleri dakikada 5 istek ile sınırlıdır. Yoğun spam görürseniz panel/log kayıtlarını
 kontrol edin ve barındırma tarafında ek limit uygulayın.
 
-### Formun siteye bağlanması
+### Formun çalışma biçimi
 
-Mesajların panele düşmesi için sitedeki formun aynı origin'deki
-`/api/collections/contact_messages/records` adresine `kvkk_consent: true` ile göndermesi gerekir.
-Bu frontend güncellemesi tamamlanana kadar form eski davranışı (e-posta uygulaması) kullanabilir;
-panele kayıt düşmezse geliştiriciye bildirin. Eski `kvkk` alanı onay yerine **geçmez**.
+Form, aynı origin'deki `/api/collections/contact_messages/records` adresine yazar ve KVKK onayını
+`kvkk_consent: true` olarak gönderir. Gönderim başarılıysa kayıt panelde görünür; hata olursa
+ziyaretçiye mesaj gösterilir. Eski `kvkk` alanı onay yerine **geçmez**.
 
 Tam KVKK aydınlatma metni henüz yayınlanmamıştır; formdaki bağlantı sayfa içindeki kısa nota
 gider. Metin `pages` koleksiyonuna eklendiğinde bağlantı oraya yönlendirilmelidir.
@@ -226,10 +225,10 @@ gider. Metin `pages` koleksiyonuna eklendiğinde bağlantı oraya yönlendirilme
 
 | Koleksiyon | Kullanım | Not |
 |---|---|---|
-| `practice_areas` | Ana sayfadaki 9 çalışma alanı kartı ve detay içeriği. `published` kapalıysa görünmez; `sort_order` sırayı belirler. | `summary` kartta, `body` detay penceresinde kullanılacak; kart/modal bağlantısı sürüyor. |
-| `team_members` | Ekip kartları. `name`, `role`, `bio`, `photo`, `expertise`, `slug`. | `slug` zorunlu ve benzersiz (örn. `kurucu-ortak`); yalnız küçük harf/rakam/tire. `photo` yüklenebilir (JPEG/PNG/WebP, 5 MB); kart bağlantısı tamamlanana kadar sitede amblem görünür. |
-| `faq` | Sık sorulan sorular. `question`, `answer`, `sort_order`, `published`. | Akordeon bağlantısı sürüyor. |
-| `pages` | KVKK aydınlatma metni gibi serbest sayfalar. `slug` benzersiz olmalı. | Şu an boş; sayfa rotası henüz yok. |
+| `practice_areas` | Ana sayfadaki 9 çalışma alanı kartı ve detay penceresi. `published` kapalıysa görünmez; `sort_order` sırayı belirler. | `summary` kartta, `body` modalda gösterilir; kartlar ortalanmış düzendedir. |
+| `team_members` | Ekip kartları. `name`, `role`, `bio`, `photo`, `expertise`, `slug`. | `slug` zorunlu ve benzersiz (örn. `kurucu-ortak`); yalnız küçük harf/rakam/tire. `photo` yüklenebilir (JPEG/PNG/WebP, 5 MB); yüklenmezse amblem görünür. |
+| `faq` | Sık sorulan sorular. `question`, `answer`, `sort_order`, `published`. | Akordeon ve `FAQPage` yapısal verisi bu kayıtlardan beslenir. |
+| `pages` | KVKK aydınlatma metni gibi serbest sayfalar. `slug` benzersiz olmalı. | Şu an boş; public sayfa rotası yok, metin eklenince bağlantı güncellenmeli. |
 
 `slug` alanı olan tüm kayıtlarda küçük harf, rakam ve tek tire kullanın. Geçersiz slug kaydı
 **400** hatasıyla reddedilir. `published` kapatıldığında kayıt public API'de görünmez.
