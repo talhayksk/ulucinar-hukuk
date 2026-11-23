@@ -253,6 +253,25 @@ function sanitizeBody(html) {
   return sanitizer.sanitizeBody(html);
 }
 
+// Same display format as the client (assets/js/content.js): "+90 (501) 943 63 41".
+function displayPhone(value) {
+  var raw = String(value || "").trim();
+  if (!raw) {
+    return "";
+  }
+  if (/\(|\)|[a-z]/i.test(raw)) {
+    return raw;
+  }
+  var digits = raw.replace(/\D/g, "");
+  if (digits.length === 12 && digits.slice(0, 2) === "90") {
+    return (
+      "+90 (" + digits.slice(2, 5) + ") " + digits.slice(5, 8) + " " +
+      digits.slice(8, 10) + " " + digits.slice(10, 12)
+    );
+  }
+  return raw;
+}
+
 function telHref(value) {
   var raw = String(value || "").trim();
   if (!raw) {
@@ -521,7 +540,7 @@ function renderArticlePage(template, record, settings, siteUrl) {
     var socials = parseJson(settings.get("socials")) || {};
 
     if (phone) {
-      html = applySetting(html, "phone", phone, telHref(phone));
+      html = applySetting(html, "phone", displayPhone(phone), telHref(phone));
     }
     if (email) {
       html = applySetting(html, "email", email, "mailto:" + email);

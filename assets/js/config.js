@@ -42,10 +42,10 @@ window.SITE_CONFIG = {
 
   /* Placeholder contact details — replace with the real ones or via site_settings. */
   contact: {
-    phone: "+902120000000",
-    phoneDisplay: "+90 (212) 000 00 00",
+    phone: "+905019436341",
+    phoneDisplay: "+90 501 943 63 41",
     email: "info@ulucinar.av.tr",
-    address: "Teşvikiye Cad. No: 00, Nişantaşı / İstanbul",
+    address: "Karabaş Mh. Cumhuriyet Blv. No:177/2, İzmit / KOCAELİ",
     hours: "Hafta içi 09.00 – 18.30"
   },
 
@@ -53,7 +53,7 @@ window.SITE_CONFIG = {
   social: {
     instagram: "",
     linkedin: "",
-    whatsapp: "https://wa.me/905000000000"
+    whatsapp: "https://wa.me/905019436341"
   },
 
   /* Content still to be supplied by the client. */

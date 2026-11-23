@@ -438,6 +438,11 @@
   }
 
   function splitHeroTitle(text) {
+    // Keep the designed two-line lockup: the highlighted word starts line two.
+    var highlight = text.toLowerCase().indexOf("tecrübeyle");
+    if (highlight > 0) {
+      return [text.slice(0, highlight).trim(), text.slice(highlight).trim()];
+    }
     var comma = text.indexOf(",");
     if (comma > 0 && comma < text.length - 1) {
       return [text.slice(0, comma + 1), text.slice(comma + 1).trim()];
@@ -765,6 +770,36 @@
     "</div>";
   }
 
+  function faqPlainText(value) {
+    var holder = document.createElement("div");
+    holder.innerHTML = sanitizeHtml(String(value || ""));
+    return (holder.textContent || "").replace(/\s+/g, " ").trim();
+  }
+
+  /* Keep the FAQPage JSON-LD in step with the rendered accordion. */
+  function updateFaqJsonLd(items) {
+    var script = document.getElementById("faqJsonLd");
+    if (!script || !items || !items.length) { return; }
+
+    var payload = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: items.map(function (item) {
+        return {
+          "@type": "Question",
+          name: faqPlainText(item.question),
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: faqPlainText(item.answer)
+          }
+        };
+      })
+    };
+
+    // "\u003c" prevents a "</script>" sequence inside the JSON from ending the tag.
+    script.textContent = JSON.stringify(payload, null, 2).replace(/</g, "\\u003c");
+  }
+
   function initFaqContent() {
     var list = $("[data-pb-faq]");
     if (!list || !global.PB) { return; }
@@ -773,6 +808,7 @@
       if (!items || !items.length) { return; }
 
       list.innerHTML = items.map(buildFaqItem).join("");
+      updateFaqJsonLd(items);
       if (global.SiteUI && typeof global.SiteUI.initFaq === "function") {
         global.SiteUI.initFaq();
       }

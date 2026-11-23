@@ -147,7 +147,7 @@ kullanır. Kayıt sayısı 1'den fazlaysa fazlalıkları silin.
 |---|---|
 | `firm_name` | Büro adı (zorunlu) |
 | `tagline` | Kısa slogan |
-| `phone` | Telefon. `+902120000000` gibi boşluksuz yazın; site görünümü kendisi biçimlendirir. |
+| `phone` | Telefon. `+905019436341` gibi boşluksuz yazın; site görünümü kendisi biçimlendirir. |
 | `whatsapp` | WhatsApp bağlantısı: `https://wa.me/905XXXXXXXXX` |
 | `email` | İletişim e-postası |
 | `address` | Açık adres (tek satır veya virgülle) |

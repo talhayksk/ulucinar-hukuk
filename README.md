@@ -401,10 +401,8 @@ Environment variables used by the scripts (no secrets are stored in the repo):
 
 | Placeholder | Where |
 |---|---|
-| Phone `+90 (212) 000 00 00`, `+902120000000` | `index.html` top bar/contact/footer, `makale.html` top bar, `assets/js/config.js` → `contact.phone`, `site_settings.phone` |
-| WhatsApp `https://wa.me/905000000000` | `assets/js/config.js` → `social.whatsapp`, `site_settings.whatsapp` |
-| E-mail `info@ulucinar.av.tr` | same files, `site_settings.email` |
-| Address `Teşvikiye Cad. No: 00, Nişantaşı / İstanbul` | same files, `site_settings.address`, `LegalService` JSON-LD in `index.html` |
+| Contact details — **already real**: phone `+90 501 943 63 41` (`+905019436341`), WhatsApp `https://wa.me/905019436341`, address `Karabaş Mh. Cumhuriyet Blv. No:177/2, İzmit / KOCAELİ` | `index.html`, `makale.html`, `assets/js/config.js`, `site_settings`, `LegalService` JSON-LD |
+| E-mail `info@ulucinar.av.tr` (placeholder) | same files, `site_settings.email` |
 | Working hours | top bar/contact/footer, `site_settings.working_hours` |
 | Team names and roles | `index.html` team cards; `team_members` records (`name`, `role`, `slug`) |
 | Statistics “25+ yıllık deneyim”, “1.200+ dosya”, “9 uzmanlık”, “%100 gizlilik” | `site_settings.stats` JSON (seeded) and the static trust strip (`#guven`) — unverified claims, replace or remove before launch (legal-advertising rules) |
