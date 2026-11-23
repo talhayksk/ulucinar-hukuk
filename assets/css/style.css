@@ -13,6 +13,8 @@
   --gold-400: #d4b26a;
   --gold-500: #c9a227;
   --gold-600: #a9862f;
+  /* Accessible gold for text on light surfaces (>= 4.5:1 on cream/white). */
+  --gold-ink: #7a5e1c;
   --cream: #f7f4ee;
   --cream-200: #f2eee5;
   --ink: #1b2430;
@@ -1083,6 +1085,8 @@ html.js.intro-done .hero__slides {
    ========================================================================== */
 
 .process { background: var(--cream); }
+/* Light background: use the darker gold so the label keeps AA contrast. */
+.process .eyebrow { color: var(--gold-ink); }
 
 .process__list {
   position: relative;
@@ -1260,7 +1264,7 @@ html.js.intro-done .hero__slides {
 
 .article__meta {
   margin: 0 0 12px;
-  color: var(--gold-600);
+  color: var(--gold-ink);
   font-size: .62rem;
   font-weight: 600;
   letter-spacing: .16em;
@@ -1296,7 +1300,7 @@ html.js.intro-done .hero__slides {
   align-items: center;
   gap: 8px;
   align-self: flex-start;
-  color: var(--gold-600);
+  color: var(--gold-ink);
   font-size: .61rem;
   font-weight: 700;
   letter-spacing: .22em;
@@ -1774,7 +1778,7 @@ html.js.intro-done .hero__slides {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  color: rgba(247, 244, 238, .45);
+  color: rgba(247, 244, 238, .66);
 }
 
 .footer__legal a {
