@@ -90,6 +90,10 @@ button { cursor: pointer; }
 .icon--lg { width: 26px; height: 26px; }
 .icon--xl { width: 34px; height: 34px; }
 
+/* Brand marks (WhatsApp) are solid glyphs, not stroked outlines.
+   Keeps the .icon size rules and overrides its fill/stroke defaults. */
+.icon--whatsapp { fill: currentColor; stroke: none; }
+
 .icon-sprite {
   position: absolute;
   width: 0;
@@ -883,6 +887,14 @@ html.js.intro-done .hero__slides {
 }
 
 .about__body > p:not(.eyebrow) {
+  margin-bottom: 16px;
+  color: var(--muted);
+  font-size: .95rem;
+  line-height: 1.85;
+}
+
+/* Rich body wrapper (data-pb-rich="about_body") keeps the same rhythm. */
+.about__text > p {
   margin-bottom: 16px;
   color: var(--muted);
   font-size: .95rem;
