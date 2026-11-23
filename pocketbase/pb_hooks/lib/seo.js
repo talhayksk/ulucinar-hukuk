@@ -58,6 +58,21 @@ var PRACTICE_ICONS = {
   family: 1, building: 1, briefcase: 1, shield: 1, eye: 1,
 };
 
+var PAGE_MARKERS = [
+  "<title>",
+  'rel="canonical"',
+  'id="pageJsonLd"',
+  'id="pageTitle"',
+  'id="pageBody"',
+];
+
+// Public URL for each seeded legal page (slug -> path).
+var PAGE_PATHS = {
+  kvkk: "/kvkk/",
+  "cerez-politikasi": "/cerez-politikasi/",
+  gizlilik: "/gizlilik/",
+};
+
 var ARCHIVE_MARKERS = [
   "<title>",
   'rel="canonical"',
@@ -114,6 +129,10 @@ function teamPagePath(slug) {
     throw new Error("invalid team slug: " + slug);
   }
   return teamRoot() + "/" + slug + "/index.html";
+}
+
+function pageTemplatePath() {
+  return publicDir() + "/sayfa.html";
 }
 
 function archiveTemplatePath() {
@@ -1077,8 +1096,119 @@ function renderTeamPage(template, record, settings, siteUrl) {
 }
 
 /* ------------------------------------------------------------------ *
+ * Legal / information pages (pages collection -> /kvkk/ etc.)
+ * ------------------------------------------------------------------ */
+
+function renderPagePage(template, record, settings, siteUrl, urlPath) {
+  var title = get(record, "title") || get(record, "slug");
+  var firm = get(settings, "firm_name") || "ULUÇINAR Hukuk & Danışmanlık";
+  var canonical = siteUrl + urlPath;
+  var pageTitle = title + " | " + firm;
+  var rawContent = get(record, "content");
+  // The draft warning is visible on the page but must not become the meta
+  // description; strip it from the raw source before sanitizing.
+  var descriptionSource = rawContent.replace(
+    /<p[^>]*class="legal-warning"[^>]*>[\s\S]*?<\/p>/i,
+    ""
+  );
+  var contentHtml = sanitizeBody(rawContent);
+  var updated = get(record, "updated") || get(record, "created");
+  var description =
+    clampText(plainTextFromHtml(descriptionSource), 155) ||
+    get(settings, "default_seo_description");
+  var image = absolutize(get(settings, "og_image_url"), siteUrl) || siteUrl + "/assets/img/og-cover.jpg";
+  var html = rootifyHtml(template);
+
+  if (!contentHtml) {
+    contentHtml = "<p>" + escapeHtml(get(record, "excerpt")) + "</p>";
+  }
+
+  html = html.replace(/<html([^>]*)>/i, function (match, attrs) {
+    return "<html" + stripAttr(attrs, "data-ssr") + ' data-ssr="1">';
+  });
+  html = html.replace(/<span([^>]*\bid="pageCrumb"[^>]*)>[\s\S]*?<\/span>/i, function (match, attrs) {
+    return "<span" + attrs + ">" + escapeHtml(title) + "</span>";
+  });
+  html = html.replace(/<h1([^>]*\bid="pageTitle"[^>]*)>[\s\S]*?<\/h1>/i, function (match, attrs) {
+    return "<h1" + attrs + ">" + escapeHtml(title) + "</h1>";
+  });
+  html = html.replace(/<p([^>]*\bid="pageUpdated"[^>]*)>[\s\S]*?<\/p>/i, function (match, attrs) {
+    var printed = displayDate(updated);
+    return "<p" + attrs + ">" + (printed ? "Son güncelleme: " + escapeHtml(printed) : "") + "</p>";
+  });
+
+  var bodyMarker = "@@ULUCINAR_PAGE_BODY@@";
+  html = html.replace(/<div([^>]*\bid="pageBody"[^>]*)>[\s\S]*?<\/div>/i, function (match, attrs) {
+    return "<div" + attrs + ">" + bodyMarker + "</div>";
+  });
+  html = html.split(bodyMarker).join(contentHtml);
+
+  html = html.replace(/<title>[\s\S]*?<\/title>/i, function () {
+    return "<title>" + escapeHtml(pageTitle) + "</title>";
+  });
+  html = setMetaTag(html, "name", "description", description);
+  html = setMetaTag(html, "property", "og:type", "article");
+  html = setMetaTag(html, "property", "og:title", pageTitle);
+  html = setMetaTag(html, "property", "og:description", description);
+  html = setMetaTag(html, "property", "og:url", canonical);
+  html = setMetaTag(html, "property", "og:image", image);
+  html = setMetaTag(html, "name", "twitter:title", pageTitle);
+  html = setMetaTag(html, "name", "twitter:description", description);
+  html = setMetaTag(html, "name", "twitter:image", image);
+  html = html.replace(/<link\s+rel="canonical"\s+href="[^"]*">/i, function () {
+    return '<link rel="canonical" href="' + escapeHtml(canonical) + '">';
+  });
+
+  var pageLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: title,
+    description: description,
+    url: canonical,
+    inLanguage: "tr-TR",
+    dateModified: isoDateTime(updated),
+    isPartOf: { "@type": "WebSite", name: firm, url: siteUrl + "/" },
+  };
+  var breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Anasayfa", item: siteUrl + "/" },
+      { "@type": "ListItem", position: 2, name: title, item: canonical },
+    ],
+  };
+  html = html.replace(
+    /(<script type="application\/ld\+json" id="pageJsonLd">)[\s\S]*?(<\/script>)/i,
+    function (match, open, close) {
+      return open + "\n" + jsonLd(pageLd) + "\n" + close;
+    }
+  );
+  html = html.replace(/<\/head>/i, function () {
+    return '  <script type="application/ld+json" id="pageBreadcrumbJsonLd">' +
+      jsonLd(breadcrumbLd) + "</script>\n</head>";
+  });
+
+  return applySiteSettings(html, settings);
+}
+
+/* ------------------------------------------------------------------ *
  * Queries and generation
  * ------------------------------------------------------------------ */
+
+function findPublishedPageBySlug(app, slug) {
+  if (!slug) {
+    return null;
+  }
+  try {
+    return app.findFirstRecordByFilter(
+      "pages",
+      "slug = {:slug} && published = true",
+      { slug: slug }
+    );
+  } catch (err) {
+    return null;
+  }
+}
 
 function publishedPractices(app) {
   try {
@@ -1319,6 +1449,46 @@ function syncAll(app) {
     siteUrl: siteUrl,
   });
 
+  // Legal / information pages (fixed public URLs).
+  summary.pagesGenerated = 0;
+  var pageTemplate;
+  try {
+    pageTemplate = readText(pageTemplatePath());
+  } catch (err) {
+    warn("page template not found at " + pageTemplatePath() + " - legal pages not generated");
+    pageTemplate = null;
+  }
+  if (pageTemplate) {
+    var missingPageMarkers = [];
+    for (var pm = 0; pm < PAGE_MARKERS.length; pm++) {
+      if (pageTemplate.indexOf(PAGE_MARKERS[pm]) === -1) {
+        missingPageMarkers.push(PAGE_MARKERS[pm]);
+      }
+    }
+    if (missingPageMarkers.length) {
+      warn(
+        "page template is missing required markers (" + missingPageMarkers.join(", ") +
+        "); legal pages not generated"
+      );
+    } else {
+      for (var pageSlug in PAGE_PATHS) {
+        var pagePath = PAGE_PATHS[pageSlug];
+        var pageRecord = findPublishedPageBySlug(app, pageSlug);
+        var pageFile = publicDir() + pagePath + "index.html";
+        if (!pageRecord) {
+          removeTree(publicDir() + pagePath);
+          continue;
+        }
+        try {
+          writeText(pageFile, renderPagePage(pageTemplate, pageRecord, settings, siteUrl, pagePath));
+          summary.pagesGenerated++;
+        } catch (err) {
+          warn("failed to render page " + pageSlug + ": " + err);
+        }
+      }
+    }
+  }
+
   log("sync complete: " + summary.generated + " page(s) generated, " + summary.removed + " removed");
   return summary;
 }
@@ -1367,6 +1537,17 @@ function buildSitemap(app) {
     entries.push({
       loc: siteUrl + "/calisma-alani/" + encodeURIComponent(get(practice, "slug")) + "/",
       lastmod: dateOnly(get(practice, "updated") || get(practice, "created")),
+    });
+  }
+
+  for (var pageSlug in PAGE_PATHS) {
+    var legalPage = findPublishedPageBySlug(app, pageSlug);
+    if (!legalPage) {
+      continue;
+    }
+    entries.push({
+      loc: siteUrl + PAGE_PATHS[pageSlug],
+      lastmod: dateOnly(get(legalPage, "updated") || get(legalPage, "created")),
     });
   }
 

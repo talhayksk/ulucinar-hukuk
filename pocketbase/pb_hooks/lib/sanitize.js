@@ -175,6 +175,11 @@ function renderOpenTag(name, rawAttrs) {
 
   for (var i = 0; i < attrs.length; i++) {
     var attr = attrs[i];
+    // Single safe class: the legal draft warning needs its styling hook.
+    if (name === "p" && attr.name === "class" && String(attr.value).trim() === "legal-warning") {
+      out += ' class="legal-warning"';
+      continue;
+    }
     if (!allowed[attr.name]) {
       continue;
     }

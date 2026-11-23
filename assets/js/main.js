@@ -761,6 +761,80 @@
   window.SiteUI = window.SiteUI || {};
   window.SiteUI.initFaq = initFaq;
 
+
+  /* ------------------------------------------------------------------ *
+   * 7b. Cookie notice (localStorage, shown once)
+   * ------------------------------------------------------------------ */
+
+  var COOKIE_KEY = "ulucinar-cookie-consent";
+
+  function readCookieChoice() {
+    try {
+      return window.localStorage.getItem(COOKIE_KEY);
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function storeCookieChoice(choice) {
+    try {
+      window.localStorage.setItem(COOKIE_KEY, JSON.stringify({ choice: choice, at: new Date().toISOString() }));
+    } catch (err) {
+      /* private mode: show the banner again next visit */
+    }
+  }
+
+  function initCookieBanner() {
+    if (readCookieChoice()) { return; }
+    if (document.getElementById("cookieBanner")) { return; }
+
+    var banner = document.createElement("div");
+    banner.className = "cookie-banner";
+    banner.id = "cookieBanner";
+    banner.setAttribute("role", "region");
+    banner.setAttribute("aria-label", "Çerez bilgilendirmesi");
+    banner.innerHTML =
+      '<div class="cookie-banner__inner">' +
+        '<p class="cookie-banner__text">Bu sitede yalnızca <strong>zorunlu ve teknik çerezler</strong> ile ' +
+          'tarayıcı yerel depolaması (localStorage) kullanılır; analitik veya reklam çerezi yoktur. ' +
+          'Ayrıntılar için <a href="/cerez-politikasi/">Çerez Politikası</a>.</p>' +
+        '<div class="cookie-banner__actions">' +
+          '<button type="button" class="btn btn--gold btn--sm" data-cookie-choice="accepted">Kabul et</button>' +
+          '<button type="button" class="btn btn--ghost btn--sm" data-cookie-choice="essential">Sadece zorunlu</button>' +
+          '<button type="button" class="cookie-banner__close" data-cookie-choice="dismissed" aria-label="Çerez bilgilendirmesini kapat">' +
+            '<svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>' +
+          "</button>" +
+        "</div>" +
+      "</div>";
+    document.body.appendChild(banner);
+    document.body.classList.add("has-cookie-banner");
+
+    function hide(choice) {
+      document.body.classList.remove("has-cookie-banner");
+      storeCookieChoice(choice);
+      banner.classList.add("is-hidden");
+      window.setTimeout(function () {
+        if (banner.parentNode) { banner.parentNode.removeChild(banner); }
+      }, 260);
+      document.removeEventListener("keydown", onKey);
+    }
+
+    function onKey(event) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        hide("dismissed");
+      }
+    }
+
+    banner.addEventListener("click", function (event) {
+      var target = event.target.closest ? event.target.closest("[data-cookie-choice]") : null;
+      if (!target) { return; }
+      hide(target.getAttribute("data-cookie-choice") || "accepted");
+    });
+
+    document.addEventListener("keydown", onKey);
+  }
+
   /* ------------------------------------------------------------------ *
    * Boot
    * ------------------------------------------------------------------ */
@@ -782,6 +856,7 @@
     initForm();
     initYear();
     initDetailsLink();
+    initCookieBanner();
     startIntro();
   });
 })();

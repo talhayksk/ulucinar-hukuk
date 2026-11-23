@@ -61,6 +61,7 @@
     email: function (s) { return s.email; },
     address: function (s) { return s.address; },
     working_hours: function (s) { return s.working_hours || s.hours; },
+    map: function (s) { return s.map_url; },
     whatsapp: function (s) { return getSetting(s, "whatsapp"); },
     instagram: function (s) { return getSetting(s, "instagram"); },
     linkedin: function (s) { return getSetting(s, "linkedin"); },
@@ -151,6 +152,7 @@
       if (hrefType === "tel") { href = telHref(settings.phone); }
       else if (hrefType === "mailto") { href = mailHref(settings.email); }
       else if (hrefType === "wa") { href = whatsappHref(settings.whatsapp); }
+      else if (hrefType === "map") { href = urlHref(settings.map_url); }
       else if (hrefType === "instagram") { href = urlHref(getSetting(settings, "instagram")); }
       else if (hrefType === "linkedin") { href = urlHref(getSetting(settings, "linkedin")); }
 

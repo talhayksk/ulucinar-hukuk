@@ -165,6 +165,23 @@ routerAdd("GET", "/ekip-uyesi.html", function (e) {
 });
 
 /* ------------------------------------------------------------------ *
+ * Legal / information pages (served from the generated directories)
+ * ------------------------------------------------------------------ */
+
+routerAdd("GET", "/kvkk", function (e) {
+  return e.redirect(301, "/kvkk/");
+});
+routerAdd("GET", "/cerez-politikasi", function (e) {
+  return e.redirect(301, "/cerez-politikasi/");
+});
+routerAdd("GET", "/gizlilik", function (e) {
+  return e.redirect(301, "/gizlilik/");
+});
+routerAdd("GET", "/sayfa.html", function (e) {
+  return e.redirect(301, "/");
+});
+
+/* ------------------------------------------------------------------ *
  * Sitemap and robots
  * ------------------------------------------------------------------ */
 

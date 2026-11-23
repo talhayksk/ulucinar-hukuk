@@ -2828,3 +2828,118 @@ a.team-card {
   color: var(--gold-600);
   border-color: var(--gold-500);
 }
+
+/* ==================================================================== *
+ * Legal pages (/kvkk/, /cerez-politikasi/, /gizlilik/)
+ * ==================================================================== */
+.legal-warning {
+  margin: 0 0 26px;
+  padding: 14px 18px;
+  color: #7a4b12;
+  background: rgba(201, 162, 39, .12);
+  border: 1px solid rgba(169, 134, 47, .5);
+  font-size: .92rem;
+  line-height: 1.7;
+}
+.legal-warning strong { color: #6b3f0b; }
+.page-updated {
+  margin-top: 12px;
+  color: rgba(247, 244, 238, .62);
+  font-size: .78rem;
+  letter-spacing: .04em;
+}
+.detail-hero--page { padding-bottom: 48px; }
+
+/* Contact: map link (no third-party iframe) */
+.contact__map {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--gold-600);
+  font-weight: 600;
+  text-decoration: none;
+}
+.contact__map:hover { color: var(--ink); }
+.contact__map .icon { width: 14px; height: 14px; }
+
+/* ==================================================================== *
+ * Cookie notice
+ * ==================================================================== */
+.cookie-banner {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 950;
+  padding: 18px;
+  color: rgba(247, 244, 238, .86);
+  background: var(--navy-950);
+  border-top: 1px solid rgba(212, 178, 106, .45);
+  box-shadow: 0 -18px 42px rgba(0, 0, 0, .3);
+  transition: transform .25s ease, opacity .25s ease;
+}
+.cookie-banner.is-hidden {
+  transform: translateY(100%);
+  opacity: 0;
+}
+.cookie-banner__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+.cookie-banner__text {
+  flex: 1 1 520px;
+  margin: 0;
+  font-size: .84rem;
+  line-height: 1.65;
+}
+.cookie-banner__text strong { color: #fbf8f1; }
+.cookie-banner__text a {
+  color: var(--gold-300);
+  text-decoration: underline;
+}
+.cookie-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.cookie-banner__close {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: var(--cream);
+  background: transparent;
+  border: 1px solid rgba(247, 244, 238, .3);
+  cursor: pointer;
+}
+.cookie-banner__close:hover { border-color: var(--gold-400); color: var(--gold-300); }
+.cookie-banner__close .icon { width: 16px; height: 16px; }
+
+/* Keep the floating buttons from covering the notice */
+body.has-cookie-banner .whatsapp-fab,
+body.has-cookie-banner .to-top { display: none; }
+
+@media (max-width: 640px) {
+  .cookie-banner { padding: 14px; }
+  .cookie-banner__inner { flex-direction: column; align-items: stretch; }
+  .cookie-banner__actions .btn { flex: 1 1 auto; }
+}
+
+/* Cookie banner buttons (button elements have a UA background by default) */
+.cookie-banner .btn--ghost {
+  background: transparent;
+  color: var(--cream);
+  border-color: rgba(247, 244, 238, .4);
+}
+.cookie-banner .btn--ghost:hover,
+.cookie-banner .btn--ghost:focus-visible {
+  background: transparent;
+  color: var(--gold-300);
+  border-color: var(--gold-400);
+}
