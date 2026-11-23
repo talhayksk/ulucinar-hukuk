@@ -35,6 +35,29 @@ var TR_MONTHS = [
 
 var BODY_MARKER = "@@ULUCINAR_ARTICLE_BODY@@";
 
+var PRACTICE_MARKERS = [
+  "<title>",
+  'rel="canonical"',
+  'id="practiceJsonLd"',
+  'id="practiceDetailTitle"',
+  'id="practiceDetailBody"',
+  "<!-- practice:list -->",
+];
+
+var TEAM_MARKERS = [
+  "<title>",
+  'rel="canonical"',
+  'id="teamJsonLd"',
+  'id="teamDetailName"',
+  'id="teamDetailBio"',
+  "<!-- team:media -->",
+];
+
+var PRACTICE_ICONS = {
+  scale: 1, gavel: 1, columns: 1, home: 1, scroll: 1, globe: 1, clock: 1,
+  family: 1, building: 1, briefcase: 1, shield: 1, eye: 1,
+};
+
 var ARCHIVE_MARKERS = [
   "<title>",
   'rel="canonical"',
@@ -61,6 +84,36 @@ function templatePath() {
 
 function articleRoot() {
   return publicDir() + "/makale";
+}
+
+function practiceTemplatePath() {
+  return publicDir() + "/calisma-alani.html";
+}
+
+function teamTemplatePath() {
+  return publicDir() + "/ekip-uyesi.html";
+}
+
+function practiceRoot() {
+  return publicDir() + "/calisma-alani";
+}
+
+function teamRoot() {
+  return publicDir() + "/ekip";
+}
+
+function practicePagePath(slug) {
+  if (!sanitizer.validateSlug(slug)) {
+    throw new Error("invalid practice slug: " + slug);
+  }
+  return practiceRoot() + "/" + slug + "/index.html";
+}
+
+function teamPagePath(slug) {
+  if (!sanitizer.validateSlug(slug)) {
+    throw new Error("invalid team slug: " + slug);
+  }
+  return teamRoot() + "/" + slug + "/index.html";
 }
 
 function archiveTemplatePath() {
@@ -174,6 +227,23 @@ function parseJson(value) {
       return JSON.parse(value);
     } catch (err) {
       return null;
+    }
+  }
+  // PocketBase JSON fields arrive as raw bytes ([]uint8) in the JSVM runtime.
+  if (typeof value.length === "number") {
+    var isByteArray = true;
+    for (var i = 0; i < value.length; i++) {
+      if (typeof value[i] !== "number") {
+        isByteArray = false;
+        break;
+      }
+    }
+    if (isByteArray) {
+      try {
+        return JSON.parse(toString(value));
+      } catch (err) {
+        return null;
+      }
     }
   }
   return value;
@@ -744,8 +814,287 @@ function renderArchivePage(template, articles, settings, siteUrl) {
 }
 
 /* ------------------------------------------------------------------ *
+ * Practice area / team member detail pages
+ * ------------------------------------------------------------------ */
+
+function plainTextFromHtml(html) {
+  return String(html || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function clampText(text, max) {
+  var value = String(text || "").trim();
+  if (value.length <= max) {
+    return value;
+  }
+  var cut = value.slice(0, max);
+  var space = cut.lastIndexOf(" ");
+  if (space > max * 0.6) {
+    cut = cut.slice(0, space);
+  }
+  return cut.replace(/[.,;:!?]+$/, "") + "…";
+}
+
+function practiceIconHref(name) {
+  var key = String(name || "");
+  return "#i-" + (PRACTICE_ICONS[key] ? key : "scale");
+}
+
+function renderPracticePage(template, record, allPractices, settings, siteUrl) {
+  var slug = get(record, "slug");
+  var title = get(record, "title") || slug;
+  var firm = get(settings, "firm_name") || "ULUÇINAR Hukuk & Danışmanlık";
+  var summary = get(record, "summary");
+  var bodyHtml = sanitizeBody(get(record, "body"));
+  var canonical = siteUrl + "/calisma-alani/" + encodeURIComponent(slug) + "/";
+  var pageTitle = title + " | " + firm;
+  var description =
+    summary ||
+    clampText(plainTextFromHtml(bodyHtml), 155) ||
+    get(settings, "default_seo_description");
+  var image = absolutize(get(settings, "og_image_url"), siteUrl) || siteUrl + "/assets/img/og-cover.jpg";
+  var html = rootifyHtml(template);
+
+  if (!bodyHtml) {
+    bodyHtml = "<p>" + escapeHtml(summary) + "</p>";
+  }
+
+  html = html.replace(/<html([^>]*)>/i, function (match, attrs) {
+    return "<html" + stripAttr(attrs, "data-ssr") + ' data-ssr="1">';
+  });
+
+  html = html.replace(
+    /<use href="#i-[a-z-]+" id="practiceDetailIcon"><\/use>/i,
+    '<use href="' + practiceIconHref(get(record, "icon")) + '" id="practiceDetailIcon"></use>'
+  );
+  html = html.replace(/<span([^>]*\bid="practiceDetailCrumb"[^>]*)>[\s\S]*?<\/span>/i, function (match, attrs) {
+    return "<span" + attrs + ">" + escapeHtml(title) + "</span>";
+  });
+  html = html.replace(/<h1([^>]*\bid="practiceDetailTitle"[^>]*)>[\s\S]*?<\/h1>/i, function (match, attrs) {
+    return "<h1" + attrs + ">" + escapeHtml(title) + "</h1>";
+  });
+  html = html.replace(/<p([^>]*\bid="practiceDetailSummary"[^>]*)>[\s\S]*?<\/p>/i, function (match, attrs) {
+    return "<p" + attrs + ">" + escapeHtml(summary) + "</p>";
+  });
+
+  var bodyMarker = "@@ULUCINAR_PRACTICE_BODY@@";
+  html = html.replace(/<div([^>]*\bid="practiceDetailBody"[^>]*)>[\s\S]*?<\/div>/i, function (match, attrs) {
+    return "<div" + attrs + ">" + bodyMarker + "</div>";
+  });
+  html = html.split(bodyMarker).join(bodyHtml);
+
+  var listItems = [];
+  for (var i = 0; i < allPractices.length; i++) {
+    var item = allPractices[i];
+    if (!item || get(item, "slug") === slug) {
+      continue;
+    }
+    listItems.push(
+      '<li><a href="/calisma-alani/' + encodeURIComponent(get(item, "slug")) + '/">' +
+      escapeHtml(get(item, "title") || get(item, "slug")) + "</a></li>"
+    );
+  }
+  html = html.split("<!-- practice:list -->").join(listItems.join("\n              "));
+
+  // Head: title / description / canonical / Open Graph.
+  html = html.replace(/<title>[\s\S]*?<\/title>/i, function () {
+    return "<title>" + escapeHtml(pageTitle) + "</title>";
+  });
+  html = setMetaTag(html, "name", "description", description);
+  html = setMetaTag(html, "property", "og:type", "website");
+  html = setMetaTag(html, "property", "og:title", pageTitle);
+  html = setMetaTag(html, "property", "og:description", description);
+  html = setMetaTag(html, "property", "og:url", canonical);
+  html = setMetaTag(html, "property", "og:image", image);
+  html = setMetaTag(html, "name", "twitter:title", pageTitle);
+  html = setMetaTag(html, "name", "twitter:description", description);
+  html = setMetaTag(html, "name", "twitter:image", image);
+  html = html.replace(/<link\s+rel="canonical"\s+href="[^"]*">/i, function () {
+    return '<link rel="canonical" href="' + escapeHtml(canonical) + '">';
+  });
+
+  var serviceLd = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: title,
+    description: description,
+    serviceType: "Hukuk hizmeti",
+    provider: { "@type": "LegalService", name: firm, url: siteUrl + "/" },
+    areaServed: ["İzmit", "Kocaeli", "TR"],
+    url: canonical,
+    inLanguage: "tr-TR",
+  };
+  var breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Anasayfa", item: siteUrl + "/" },
+      { "@type": "ListItem", position: 2, name: "Çalışma Alanları", item: siteUrl + "/#calisma-alanlari" },
+      { "@type": "ListItem", position: 3, name: title, item: canonical },
+    ],
+  };
+  html = html.replace(
+    /(<script type="application\/ld\+json" id="practiceJsonLd">)[\s\S]*?(<\/script>)/i,
+    function (match, open, close) {
+      return open + "\n" + jsonLd(serviceLd) + "\n" + close;
+    }
+  );
+  html = html.replace(/<\/head>/i, function () {
+    return '  <script type="application/ld+json" id="practiceBreadcrumbJsonLd">' +
+      jsonLd(breadcrumbLd) + "</script>\n</head>";
+  });
+
+  return applySiteSettings(html, settings);
+}
+
+function renderTeamPage(template, record, settings, siteUrl) {
+  var slug = get(record, "slug");
+  var name = get(record, "name") || slug;
+  var role = get(record, "role");
+  var firm = get(settings, "firm_name") || "ULUÇINAR Hukuk & Danışmanlık";
+  var expertise = parseJson(record.get("expertise"));
+  if (!expertise || typeof expertise.length !== "number") {
+    expertise = [];
+  }
+  var bioHtml = sanitizeBody(get(record, "bio"));
+  var photo = get(record, "photo");
+  var photoPath = photo ? "/api/files/team_members/" + record.id + "/" + photo : "";
+  var canonical = siteUrl + "/ekip/" + encodeURIComponent(slug) + "/";
+  var pageTitle = name + (role ? " — " + role : "") + " | " + firm;
+  var bioText = plainTextFromHtml(bioHtml);
+  var fallbackBio =
+    name + (role ? ", " + role : "") + " olarak ULUÇINAR Hukuk & Danışmanlık bünyesinde görev yapmaktadır." +
+    (expertise.length ? " Uzmanlık alanları: " + expertise.join(", ") + "." : "");
+  var description = clampText(bioText || fallbackBio, 155);
+  var image = photoPath
+    ? siteUrl + photoPath
+    : absolutize(get(settings, "og_image_url"), siteUrl) || siteUrl + "/assets/img/og-cover.jpg";
+  var html = rootifyHtml(template);
+
+  if (!bioHtml) {
+    bioHtml = "<p>" + escapeHtml(fallbackBio) + "</p>";
+  }
+
+  html = html.replace(/<html([^>]*)>/i, function (match, attrs) {
+    return "<html" + stripAttr(attrs, "data-ssr") + ' data-ssr="1">';
+  });
+
+  // Photo or monogram.
+  var mediaMarker = "@@ULUCINAR_TEAM_MEDIA@@";
+  html = html.replace(/(<div[^>]*\bid="teamDetailMedia"[^>]*)>[\s\S]*?<\/div>/i, function (match, attrs) {
+    var nextAttrs = photo
+      ? stripAttr(attrs, "team-detail__media--monogram")
+      : attrs + " team-detail__media--monogram";
+    return "<div" + nextAttrs + ">" + mediaMarker + "</div>";
+  });
+  var mediaHtml = photo
+    ? '<img src="' + escapeHtml(photoPath) + '" alt="' + escapeHtml(name) + '" width="236" height="236" loading="eager" decoding="async">'
+    : '<img src="/assets/logo/ulucinar-emblem-gold.svg" alt="" width="356" height="168" loading="lazy" decoding="async">';
+  html = html.split(mediaMarker).join(mediaHtml);
+
+  html = html.replace(/<span([^>]*\bid="teamDetailCrumb"[^>]*)>[\s\S]*?<\/span>/i, function (match, attrs) {
+    return "<span" + attrs + ">" + escapeHtml(name) + "</span>";
+  });
+  html = html.replace(/<h1([^>]*\bid="teamDetailName"[^>]*)>[\s\S]*?<\/h1>/i, function (match, attrs) {
+    return "<h1" + attrs + ">" + escapeHtml(name) + "</h1>";
+  });
+  html = html.replace(/<p([^>]*\bid="teamDetailRole"[^>]*)>[\s\S]*?<\/p>/i, function (match, attrs) {
+    return "<p" + attrs + ">" + escapeHtml(role) + "</p>";
+  });
+
+  var tagsHtml = expertise.map(function (item) {
+    return "<li>" + escapeHtml(item) + "</li>";
+  }).join("");
+  html = html.replace(/(<ul[^>]*\bid="teamDetailExpertise"[^>]*>)[\s\S]*?(<\/ul>)/i, function (match, open, close) {
+    return open + tagsHtml + close;
+  });
+
+  var bioMarker = "@@ULUCINAR_TEAM_BIO@@";
+  html = html.replace(/<div([^>]*\bid="teamDetailBio"[^>]*)>[\s\S]*?<\/div>/i, function (match, attrs) {
+    return "<div" + attrs + ">" + bioMarker + "</div>";
+  });
+  html = html.split(bioMarker).join(bioHtml);
+
+  // Head.
+  html = html.replace(/<title>[\s\S]*?<\/title>/i, function () {
+    return "<title>" + escapeHtml(pageTitle) + "</title>";
+  });
+  html = setMetaTag(html, "name", "description", description);
+  html = setMetaTag(html, "property", "og:type", "profile");
+  html = setMetaTag(html, "property", "og:title", pageTitle);
+  html = setMetaTag(html, "property", "og:description", description);
+  html = setMetaTag(html, "property", "og:url", canonical);
+  html = setMetaTag(html, "property", "og:image", image);
+  html = setMetaTag(html, "name", "twitter:title", pageTitle);
+  html = setMetaTag(html, "name", "twitter:description", description);
+  html = setMetaTag(html, "name", "twitter:image", image);
+  html = html.replace(/<link\s+rel="canonical"\s+href="[^"]*">/i, function () {
+    return '<link rel="canonical" href="' + escapeHtml(canonical) + '">';
+  });
+
+  var personLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: name,
+    jobTitle: role || "Avukat",
+    worksFor: { "@type": "LegalService", name: firm, url: siteUrl + "/" },
+    url: canonical,
+    image: image,
+    inLanguage: "tr-TR",
+  };
+  if (expertise.length) {
+    personLd.knowsAbout = expertise;
+  }
+  var breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Anasayfa", item: siteUrl + "/" },
+      { "@type": "ListItem", position: 2, name: "Ekibimiz", item: siteUrl + "/#ekibimiz" },
+      { "@type": "ListItem", position: 3, name: name, item: canonical },
+    ],
+  };
+  html = html.replace(
+    /(<script type="application\/ld\+json" id="teamJsonLd">)[\s\S]*?(<\/script>)/i,
+    function (match, open, close) {
+      return open + "\n" + jsonLd(personLd) + "\n" + close;
+    }
+  );
+  html = html.replace(/<\/head>/i, function () {
+    return '  <script type="application/ld+json" id="teamBreadcrumbJsonLd">' +
+      jsonLd(breadcrumbLd) + "</script>\n</head>";
+  });
+
+  return applySiteSettings(html, settings);
+}
+
+/* ------------------------------------------------------------------ *
  * Queries and generation
  * ------------------------------------------------------------------ */
+
+function publishedPractices(app) {
+  try {
+    return app.findRecordsByFilter("practice_areas", "published = true", "sort_order", 0, 0) || [];
+  } catch (err) {
+    return [];
+  }
+}
+
+function publishedTeamMembers(app) {
+  try {
+    return app.findRecordsByFilter("team_members", "published = true", "sort_order", 0, 0) || [];
+  } catch (err) {
+    return [];
+  }
+}
 
 function publishedArticles(app) {
   try {
@@ -768,6 +1117,72 @@ function findPublishedBySlug(app, slug) {
   } catch (err) {
     return null;
   }
+}
+
+// Renders one collection of detail pages (practices or team) and removes
+// directories that are no longer published.
+function syncDetailFamily(options) {
+  var stats = { generated: 0, removed: 0, skipped: false };
+  var template;
+
+  try {
+    template = readText(options.templatePath);
+  } catch (err) {
+    warn("template not found at " + options.templatePath + " - pages not generated");
+    stats.skipped = true;
+    return stats;
+  }
+
+  var missing = [];
+  for (var m = 0; m < options.markers.length; m++) {
+    if (template.indexOf(options.markers[m]) === -1) {
+      missing.push(options.markers[m]);
+    }
+  }
+  if (missing.length) {
+    stats.skipped = true;
+    warn(
+      options.templatePath + " is missing required markers (" + missing.join(", ") +
+      "); generation aborted"
+    );
+    return stats;
+  }
+
+  var keep = {};
+  for (var i = 0; i < options.records.length; i++) {
+    var record = options.records[i];
+    if (!record) {
+      continue;
+    }
+    var slug = get(record, "slug");
+    if (!slug) {
+      warn("record without slug skipped: " + record.id);
+      continue;
+    }
+    try {
+      writeText(options.pagePath(slug), options.render(template, record));
+      keep[slug] = true;
+      stats.generated++;
+    } catch (err) {
+      warn("failed to render " + slug + ": " + err);
+    }
+  }
+
+  try {
+    var entries = $os.readDir(options.root);
+    for (var j = 0; j < entries.length; j++) {
+      var entry = entries[j];
+      if (!entry.isDir() || keep[entry.name()]) {
+        continue;
+      }
+      removeTree(options.root + "/" + entry.name());
+      stats.removed++;
+    }
+  } catch (err) {
+    // no generated directory yet
+  }
+
+  return stats;
 }
 
 // Regenerates every published article page and removes pages that are no
@@ -875,6 +1290,35 @@ function syncAll(app) {
     }
   }
 
+  // Practice area and team member detail pages.
+  summary.practicesGenerated = syncDetailFamily({
+    app: app,
+    templatePath: practiceTemplatePath(),
+    markers: PRACTICE_MARKERS,
+    records: publishedPractices(app),
+    root: practiceRoot(),
+    pagePath: practicePagePath,
+    render: function (template, record) {
+      return renderPracticePage(template, record, publishedPractices(app), settings, siteUrl);
+    },
+    settings: settings,
+    siteUrl: siteUrl,
+  });
+
+  summary.teamGenerated = syncDetailFamily({
+    app: app,
+    templatePath: teamTemplatePath(),
+    markers: TEAM_MARKERS,
+    records: publishedTeamMembers(app),
+    root: teamRoot(),
+    pagePath: teamPagePath,
+    render: function (template, record) {
+      return renderTeamPage(template, record, settings, siteUrl);
+    },
+    settings: settings,
+    siteUrl: siteUrl,
+  });
+
   log("sync complete: " + summary.generated + " page(s) generated, " + summary.removed + " removed");
   return summary;
 }
@@ -913,6 +1357,30 @@ function buildSitemap(app) {
   }
   entries.unshift({ loc: siteUrl + "/", lastmod: homeLastmod });
   entries.splice(1, 0, { loc: siteUrl + "/makaleler/", lastmod: homeLastmod });
+
+  var practices = publishedPractices(app);
+  for (var p = 0; p < practices.length; p++) {
+    var practice = practices[p];
+    if (!practice || !get(practice, "slug")) {
+      continue;
+    }
+    entries.push({
+      loc: siteUrl + "/calisma-alani/" + encodeURIComponent(get(practice, "slug")) + "/",
+      lastmod: dateOnly(get(practice, "updated") || get(practice, "created")),
+    });
+  }
+
+  var members = publishedTeamMembers(app);
+  for (var t = 0; t < members.length; t++) {
+    var member = members[t];
+    if (!member || !get(member, "slug")) {
+      continue;
+    }
+    entries.push({
+      loc: siteUrl + "/ekip/" + encodeURIComponent(get(member, "slug")) + "/",
+      lastmod: dateOnly(get(member, "updated") || get(member, "created")),
+    });
+  }
 
   var xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
   xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
@@ -970,5 +1438,11 @@ module.exports = {
   sendNotFound: sendNotFound,
   readArticleHtml: function (slug) {
     return readText(articlePath(slug));
+  },
+  readPracticeHtml: function (slug) {
+    return readText(practicePagePath(slug));
+  },
+  readTeamHtml: function (slug) {
+    return readText(teamPagePath(slug));
   },
 };

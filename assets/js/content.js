@@ -560,6 +560,7 @@
     if (!modal) { return; }
 
     var title = $("#practiceModalTitle");
+    var detail = $("#practiceModalDetail");
     var summary = $("#practiceModalSummary");
     var body = $("#practiceModalBody");
     var error = $("#practiceModalError");
@@ -573,6 +574,12 @@
 
     if (title) { title.textContent = String(name || "Çalışma alanı"); }
     if (summary) { summary.textContent = String(text || ""); }
+    if (detail) {
+      detail.setAttribute(
+        "href",
+        record && record.slug ? "/calisma-alani/" + encodeURIComponent(record.slug) + "/" : "/#calisma-alanlari"
+      );
+    }
     if (icon) { icon.setAttribute("href", practiceIcon(record && record.icon)); }
 
     if (body) {
@@ -672,6 +679,9 @@
     var title = $(".practice__title", card);
     var text = $(".practice__desc", card);
 
+    if (card.tagName === "A" && record.slug) {
+      card.setAttribute("href", "/calisma-alani/" + encodeURIComponent(record.slug) + "/");
+    }
     if (icon) { icon.setAttribute("href", practiceIcon(record.icon)); }
     if (title && record.title) { title.textContent = record.title; }
     if (text && record.summary) { text.textContent = record.summary; }
@@ -701,7 +711,15 @@
     bindPracticeModal();
 
     cards.forEach(function (card) {
-      card.addEventListener("click", function () {
+      card.addEventListener("click", function (event) {
+        // Modifier/middle click (new tab, new window) keeps the real page.
+        if (
+          event.defaultPrevented || event.button !== 0 ||
+          event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+        ) {
+          return;
+        }
+        event.preventDefault();
         var record = practiceRecords[card.getAttribute("data-practice-slug")];
         openPracticeModal(card, record);
       });
@@ -739,6 +757,10 @@
         var expertise = normalizeArray(record.expertise);
         if (areas && expertise.length) {
           areas.textContent = expertise.join(" · ");
+        }
+
+        if (card.tagName === "A" && record.slug) {
+          card.setAttribute("href", "/ekip/" + encodeURIComponent(record.slug) + "/");
         }
 
         var photo = record.photo && global.PB.fileUrl ? global.PB.fileUrl(record, record.photo) : "";

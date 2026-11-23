@@ -88,6 +88,83 @@ routerAdd("GET", "/makaleler", function (e) {
 });
 
 /* ------------------------------------------------------------------ *
+ * Practice area detail pages
+ * ------------------------------------------------------------------ */
+
+function seoServePracticePage(e) {
+  var seo = require(__hooks + "/lib/seo.js");
+  var slug = String(e.request.pathValue("slug") || "").replace(/\/+$/, "");
+  var path = String(e.request.requestURI || "").split("?")[0];
+  if (!slug) {
+    return e.redirect(301, "/#calisma-alanlari");
+  }
+
+  var html;
+  try {
+    html = seo.readPracticeHtml(slug);
+  } catch (err) {
+    return seo.sendNotFound(e);
+  }
+
+  if (!/\/$/.test(path)) {
+    return e.redirect(301, "/calisma-alani/" + encodeURIComponent(slug) + "/");
+  }
+
+  e.response.header().set("Cache-Control", "public, max-age=300, must-revalidate");
+  e.response.header().set("X-Content-Type-Options", "nosniff");
+  return e.html(200, html);
+}
+
+routerAdd("GET", "/calisma-alani/{slug}", seoServePracticePage);
+routerAdd("GET", "/calisma-alani/{slug}/", seoServePracticePage);
+routerAdd("GET", "/calisma-alani/{$}", function (e) {
+  return e.redirect(301, "/#calisma-alanlari");
+});
+routerAdd("GET", "/calisma-alani.html", function (e) {
+  return e.redirect(301, "/#calisma-alanlari");
+});
+
+/* ------------------------------------------------------------------ *
+ * Team member detail pages
+ * ------------------------------------------------------------------ */
+
+function seoServeTeamPage(e) {
+  var seo = require(__hooks + "/lib/seo.js");
+  var slug = String(e.request.pathValue("slug") || "").replace(/\/+$/, "");
+  var path = String(e.request.requestURI || "").split("?")[0];
+  if (!slug) {
+    return e.redirect(301, "/#ekibimiz");
+  }
+
+  var html;
+  try {
+    html = seo.readTeamHtml(slug);
+  } catch (err) {
+    return seo.sendNotFound(e);
+  }
+
+  if (!/\/$/.test(path)) {
+    return e.redirect(301, "/ekip/" + encodeURIComponent(slug) + "/");
+  }
+
+  e.response.header().set("Cache-Control", "public, max-age=300, must-revalidate");
+  e.response.header().set("X-Content-Type-Options", "nosniff");
+  return e.html(200, html);
+}
+
+routerAdd("GET", "/ekip/{slug}", seoServeTeamPage);
+routerAdd("GET", "/ekip/{slug}/", seoServeTeamPage);
+routerAdd("GET", "/ekip/{$}", function (e) {
+  return e.redirect(301, "/#ekibimiz");
+});
+routerAdd("GET", "/ekip", function (e) {
+  return e.redirect(301, "/#ekibimiz");
+});
+routerAdd("GET", "/ekip-uyesi.html", function (e) {
+  return e.redirect(301, "/#ekibimiz");
+});
+
+/* ------------------------------------------------------------------ *
  * Sitemap and robots
  * ------------------------------------------------------------------ */
 

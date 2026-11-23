@@ -2632,3 +2632,199 @@ body.modal-open { overflow: hidden; }
 /* `.article` sets display:flex, which would beat the hidden attribute. */
 .archive__grid .article[hidden] { display: none; }
 .archive__grid > :last-child { grid-column: auto; max-width: none; }
+
+/* ==================================================================== *
+ * Practice area / team member detail pages
+ * ==================================================================== */
+.detail-hero {
+  padding-block: 84px 64px;
+  color: var(--cream);
+  background:
+    radial-gradient(ellipse at 85% 10%, rgba(212, 178, 106, .20), transparent 55%),
+    linear-gradient(135deg, var(--navy-950) 0%, var(--navy-800) 62%, #221d14 100%);
+}
+.detail-hero .breadcrumb { margin-bottom: 30px; }
+
+.detail-hero__head {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+.detail-hero__icon {
+  flex: none;
+  color: var(--gold-400);
+}
+.detail-hero__title {
+  margin: 6px 0 0;
+  color: #fbf8f1;
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 4vw, 2.9rem);
+  font-weight: 500;
+  line-height: 1.18;
+}
+.detail-hero__lead {
+  max-width: 62ch;
+  color: rgba(247, 244, 238, .74);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.detail { padding-top: 64px; }
+.detail__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: clamp(32px, 5vw, 64px);
+  align-items: start;
+}
+.detail__grid--person { grid-template-columns: minmax(0, 1fr) 300px; }
+.detail__main .prose { max-width: 68ch; }
+.detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.detail__aside {
+  position: sticky;
+  top: 96px;
+  padding: 26px;
+  background: var(--white);
+  border: 1px solid rgba(27, 36, 48, .1);
+}
+.detail__aside-title {
+  margin-bottom: 16px;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+.detail__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 22px;
+  padding: 0;
+  list-style: none;
+}
+.detail__list a {
+  display: block;
+  padding: 9px 0;
+  color: var(--ink);
+  font-size: .9rem;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(27, 36, 48, .08);
+}
+.detail__list li:last-child a { border-bottom: 0; }
+.detail__list a:hover { color: var(--gold-600); }
+.detail__aside > p { color: var(--muted); font-size: .88rem; line-height: 1.7; }
+.detail__aside-cta {
+  margin-top: 16px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(27, 36, 48, .1);
+}
+.detail__aside-cta p {
+  margin-bottom: 14px;
+  color: var(--muted);
+  font-size: .88rem;
+  line-height: 1.7;
+}
+
+/* Team member hero */
+.team-detail {
+  display: flex;
+  align-items: center;
+  gap: clamp(20px, 4vw, 40px);
+}
+.team-detail__media {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: clamp(120px, 18vw, 168px);
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: radial-gradient(circle at 35% 25%, #17304c, #0a1626 72%);
+  border: 1px solid rgba(212, 178, 106, .55);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 4px rgba(8, 20, 34, .85),
+    inset 0 0 0 5px rgba(212, 178, 106, .22);
+}
+.team-detail__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.team-detail__media--monogram img {
+  width: 70%;
+  height: auto;
+  object-fit: contain;
+}
+.team-detail__role {
+  margin: 8px 0 16px;
+  color: var(--gold-300);
+  font-size: .85rem;
+  letter-spacing: .06em;
+}
+.team-detail__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+}
+.team-detail__tags li {
+  padding: 6px 12px;
+  color: rgba(247, 244, 238, .82);
+  border: 1px solid rgba(212, 178, 106, .4);
+  font-size: .72rem;
+  letter-spacing: .04em;
+}
+.team-detail__body .btn { margin-top: 4px; }
+
+@media (max-width: 960px) {
+  .detail__grid,
+  .detail__grid--person { grid-template-columns: 1fr; }
+  .detail__aside { position: static; }
+  .team-detail { flex-direction: column; align-items: flex-start; }
+}
+
+/* Team cards are profile links now */
+a.team-card {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+.team-card__more {
+  display: inline-block;
+  margin-top: 16px;
+  color: var(--gold-400);
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+.team-card:hover .team-card__more,
+.team-card:focus-visible .team-card__more { opacity: 1; }
+@media (hover: none) {
+  .team-card__more { opacity: 1; }
+}
+
+/* Ghost buttons on light surfaces (cream) need dark text to be visible */
+.article-foot .btn--ghost,
+.detail__actions .btn--ghost,
+.article-state__actions .btn--ghost {
+  color: var(--ink);
+  border-color: rgba(27, 36, 48, .3);
+}
+.article-foot .btn--ghost:hover,
+.detail__actions .btn--ghost:hover,
+.article-state__actions .btn--ghost:hover {
+  color: var(--gold-600);
+  border-color: var(--gold-500);
+}
