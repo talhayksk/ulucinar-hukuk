@@ -1,0 +1,63 @@
+[Unit]
+Description=ULUÇINAR Hukuk PocketBase (site + CMS + admin panel)
+Documentation=https://pocketbase.io/docs/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ulucinar
+Group=ulucinar
+WorkingDirectory=/opt/ulucinar
+
+# Non-secret runtime settings. PB_HTTP keeps PocketBase on loopback: all
+# public traffic must arrive through nginx (deploy/nginx.conf), never directly.
+Environment=PB_HTTP=127.0.0.1:8090
+Environment=PB_ORIGINS=https://www.ulucinar.av.tr
+# Optional: put deployment-specific values (never passwords/tokens) here.
+EnvironmentFile=-/etc/ulucinar/pocketbase.env
+
+# The repository's serve script resolves all paths from its own location:
+#   /opt/ulucinar/scripts/pocketbase-serve.sh
+#   /opt/ulucinar/pocketbase/{pb_data,pb_public,pb_migrations,pb_hooks,pocketbase}
+ExecStart=/opt/ulucinar/scripts/pocketbase-serve.sh
+
+Restart=on-failure
+RestartSec=3s
+TimeoutStopSec=20s
+KillSignal=SIGTERM
+
+# Data directory holds superuser hashes and client PII: owner-only files.
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+ProtectProc=invisible
+RestrictSUIDSGID=true
+RestrictRealtime=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=true
+SystemCallArchitectures=native
+
+# PocketBase writes only inside the data, public (generated article pages) and
+# backup directories. Everything else stays read-only.
+ReadWritePaths=/opt/ulucinar/pocketbase/pb_data
+ReadWritePaths=/opt/ulucinar/pocketbase/pb_public
+ReadWritePaths=/opt/ulucinar/pocketbase/backups
+
+LimitNOFILE=8192
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ulucinar-pocketbase
+
+[Install]
+WantedBy=multi-user.target

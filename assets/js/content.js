@@ -65,6 +65,10 @@
     instagram: function (s) { return getSetting(s, "instagram"); },
     linkedin: function (s) { return getSetting(s, "linkedin"); },
     hero_note: function (s) { return s.hero_note; },
+    hero_lead: function (s) { return s.hero_lead; },
+    about_title: function (s) { return s.about_title; },
+    about_lead: function (s) { return s.about_lead; },
+    footer_note: function (s) { return s.footer_note; },
     tagline: function (s) { return s.tagline; },
     firm_name: function (s) { return s.firm_name; }
   };
@@ -125,6 +129,13 @@
   function applySettings(settings) {
     if (!settings) { return; }
 
+    applyHeroTitle(settings.hero_title);
+    applyStats(settings.stats);
+    applyValues(settings.values);
+    applyRichText("[data-pb-rich='about_body']", settings.about_body);
+    applyHomeSeo(settings);
+    hideEmptySocialLinks(settings);
+
     $$("[data-pb-setting]").forEach(function (element) {
       var key = element.getAttribute("data-pb-setting");
       var value = TEXT_SETTINGS[key] ? TEXT_SETTINGS[key](settings) : "";
@@ -182,7 +193,7 @@
   }
 
   function articleHref(record) {
-    return "makale.html?slug=" + encodeURIComponent(articleSlug(record));
+    return "/makale/" + encodeURIComponent(articleSlug(record)) + "/";
   }
 
   function coverUrl(record) {
@@ -396,6 +407,379 @@
   }
 
   /* ------------------------------------------------------------------ *
+   * Settings: rich home-page content (hero, about, stats, values, SEO)
+   * ------------------------------------------------------------------ */
+
+  function normalizeArray(value) {
+    if (!value) { return []; }
+    if (Object.prototype.toString.call(value) === "[object Array]") { return value; }
+    if (typeof value === "string") {
+      try {
+        var parsed = JSON.parse(value);
+        return Object.prototype.toString.call(parsed) === "[object Array]" ? parsed : [];
+      } catch (err) {
+        return [];
+      }
+    }
+    return [];
+  }
+
+  function setHeadMeta(key, value, isName) {
+    if (!value) { return; }
+    var selector = isName
+      ? 'meta[name="' + key + '"]'
+      : 'meta[property="' + key + '"]';
+    var element = document.querySelector(selector);
+    if (element) { element.setAttribute("content", value); }
+  }
+
+  function highlightBrandWord(line) {
+    return escapeHtml(line).replace(/(tecrübeyle)/i, "<em>$1</em>");
+  }
+
+  function splitHeroTitle(text) {
+    var comma = text.indexOf(",");
+    if (comma > 0 && comma < text.length - 1) {
+      return [text.slice(0, comma + 1), text.slice(comma + 1).trim()];
+    }
+    var words = text.split(/\s+/).filter(Boolean);
+    if (words.length < 5) { return [text]; }
+    var middle = Math.ceil(words.length / 2);
+    return [words.slice(0, middle).join(" "), words.slice(middle).join(" ")];
+  }
+
+  function applyHeroTitle(value) {
+    var heading = $("[data-pb-hero-title]");
+    var text = String(value || "").trim();
+    if (!heading || !text) { return; }
+
+    heading.innerHTML = splitHeroTitle(text).map(function (line) {
+      return '<span class="hero__title-line">' + highlightBrandWord(line) + "</span>";
+    }).join("");
+  }
+
+  function formatStatValue(value) {
+    var text = String(value == null ? "" : value);
+    var match = text.match(/^(.*?)([+%])$/);
+    if (match) {
+      return escapeHtml(match[1]) + "<span>" + escapeHtml(match[2]) + "</span>";
+    }
+    return escapeHtml(text);
+  }
+
+  function applyStats(value) {
+    var list = normalizeArray(value);
+    var grid = $("[data-pb-stats]");
+    if (!grid || !list.length) { return; }
+
+    grid.innerHTML = list.slice(0, 6).map(function (item) {
+      var statValue = item && item.value != null ? item.value : "";
+      var label = item && item.label != null ? item.label : "";
+      return '<div class="trust__item">' +
+        '<strong class="trust__number">' + formatStatValue(statValue) + "</strong>" +
+        '<span class="trust__label">' + escapeHtml(label) + "</span>" +
+      "</div>";
+    }).join("");
+  }
+
+  var VALUE_ICONS = ["#i-shield", "#i-scale", "#i-eye"];
+
+  function applyValues(value) {
+    var list = normalizeArray(value);
+    var wrap = $("[data-pb-values]");
+    if (!wrap || !list.length) { return; }
+
+    wrap.innerHTML = list.map(function (item, index) {
+      var title = item && item.title != null ? item.title : "";
+      var text = item && item.text != null ? item.text : "";
+      var icon = VALUE_ICONS[index % VALUE_ICONS.length];
+      return '<article class="principle">' +
+        '<svg class="icon icon--lg" aria-hidden="true"><use href="' + icon + '"></use></svg>' +
+        "<h3>" + escapeHtml(title) + "</h3>" +
+        "<p>" + escapeHtml(text) + "</p>" +
+      "</article>";
+    }).join("");
+  }
+
+  function applyRichText(selector, html) {
+    var target = $(selector);
+    var value = String(html || "");
+    if (!target || !value) { return; }
+    target.innerHTML = sanitizeHtml(value);
+  }
+
+  function applyHomeSeo(settings) {
+    var title = String(settings.seo_title || "").trim();
+    var description = String(settings.seo_description || "").trim();
+
+    if (title) {
+      document.title = title;
+      setHeadMeta("og:title", title);
+      setHeadMeta("twitter:title", title, true);
+    }
+    if (description) {
+      setHeadMeta("description", description, true);
+      setHeadMeta("og:description", description);
+      setHeadMeta("twitter:description", description, true);
+    }
+  }
+
+  function hideEmptySocialLinks(settings) {
+    ["instagram", "linkedin"].forEach(function (key) {
+      var value = getSetting(settings, key);
+      $$('[data-pb-setting="' + key + '"]').forEach(function (element) {
+        element.hidden = !value;
+      });
+    });
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Practice areas: PocketBase binding + detail modal
+   * ------------------------------------------------------------------ */
+
+  var PRACTICE_ICONS = {
+    scale: 1, gavel: 1, columns: 1, home: 1, scroll: 1, globe: 1, clock: 1,
+    family: 1, building: 1, briefcase: 1, shield: 1, eye: 1
+  };
+
+  function practiceIcon(name) {
+    var key = String(name || "");
+    return "#i-" + (PRACTICE_ICONS[key] ? key : "scale");
+  }
+
+  var practiceRecords = {};
+  var practiceModalState = { trigger: null, previousFocus: null, keydown: null };
+
+  function openPracticeModal(trigger, record) {
+    var modal = $("#practiceModal");
+    if (!modal) { return; }
+
+    var title = $("#practiceModalTitle");
+    var summary = $("#practiceModalSummary");
+    var body = $("#practiceModalBody");
+    var error = $("#practiceModalError");
+    var icon = $("[data-modal-icon]", modal);
+    var dialog = $(".modal__dialog", modal);
+    var closeBtn = $(".modal__close", modal);
+
+    var name = record && record.title ? record.title : (trigger.getAttribute("data-title") || $("h3", trigger).textContent);
+    var text = record && record.summary ? record.summary : $("p", trigger).textContent;
+    var html = record && record.body ? record.body : "";
+
+    if (title) { title.textContent = String(name || "Çalışma alanı"); }
+    if (summary) { summary.textContent = String(text || ""); }
+    if (icon) { icon.setAttribute("href", practiceIcon(record && record.icon)); }
+
+    if (body) {
+      if (html) {
+        body.innerHTML = sanitizeHtml(html);
+        body.hidden = false;
+      } else {
+        body.innerHTML = "";
+        body.hidden = true;
+      }
+    }
+    if (error) { error.hidden = true; }
+    if (record) {
+      trigger.setAttribute("data-title", record.title || "");
+      trigger.setAttribute("data-has-body", record.body ? "1" : "0");
+    }
+
+    practiceModalState.trigger = trigger;
+    practiceModalState.previousFocus = document.activeElement;
+    trigger.setAttribute("aria-expanded", "true");
+
+    modal.hidden = false;
+    document.body.classList.add("modal-open");
+
+    practiceModalState.keydown = function (event) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closePracticeModal();
+        return;
+      }
+      if (event.key !== "Tab") { return; }
+
+      var focusables = $$("a[href], button:not([disabled]), [tabindex]:not([tabindex='-1'])", modal)
+        .filter(function (element) { return element.offsetParent !== null; });
+      if (!focusables.length) { return; }
+      var first = focusables[0];
+      var last = focusables[focusables.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", practiceModalState.keydown);
+
+    if (dialog) { dialog.focus(); } else if (closeBtn) { closeBtn.focus(); }
+  }
+
+  function closePracticeModal() {
+    var modal = $("#practiceModal");
+    if (!modal || modal.hidden) { return; }
+
+    modal.hidden = true;
+    document.body.classList.remove("modal-open");
+    if (practiceModalState.keydown) {
+      document.removeEventListener("keydown", practiceModalState.keydown);
+      practiceModalState.keydown = null;
+    }
+    if (practiceModalState.trigger) {
+      practiceModalState.trigger.setAttribute("aria-expanded", "false");
+    }
+    var trigger = practiceModalState.trigger;
+    var back = practiceModalState.previousFocus;
+    practiceModalState.trigger = null;
+    practiceModalState.previousFocus = null;
+    var target = trigger || back;
+    if (target && typeof target.focus === "function") { target.focus(); }
+  }
+
+  function bindPracticeModal() {
+    var modal = $("#practiceModal");
+    if (!modal || modal.getAttribute("data-bound") === "1") { return; }
+    modal.setAttribute("data-bound", "1");
+
+    $$("[data-modal-close]", modal).forEach(function (element) {
+      element.addEventListener("click", closePracticeModal);
+    });
+
+    var cta = $("#practiceModalCta");
+    if (cta) { cta.addEventListener("click", closePracticeModal); }
+
+    var retry = $("#practiceModalRetry");
+    if (retry) {
+      retry.addEventListener("click", function () {
+        var trigger = practiceModalState.trigger;
+        closePracticeModal();
+        if (trigger) { loadPracticeAreas().then(function () { trigger.click(); }); }
+      });
+    }
+  }
+
+  function hydratePracticeCard(card, record) {
+    if (!card || !record) { return; }
+    var icon = $("use", card);
+    var title = $("h3", card);
+    var text = $("p", card);
+
+    if (icon) { icon.setAttribute("href", practiceIcon(record.icon)); }
+    if (title && record.title) { title.textContent = record.title; }
+    if (text && record.summary) { text.textContent = record.summary; }
+    card.setAttribute("data-title", record.title || "");
+    card.setAttribute("data-has-body", record.body ? "1" : "0");
+  }
+
+  function loadPracticeAreas() {
+    if (!global.PB) { return Promise.resolve([]); }
+
+    return global.PB.getPracticeAreas().then(function (records) {
+      var list = Object.prototype.toString.call(records) === "[object Array]" ? records : [];
+      practiceRecords = {};
+      list.forEach(function (record) { practiceRecords[record.slug] = record; });
+
+      $$("[data-practice-slug]").forEach(function (card) {
+        hydratePracticeCard(card, practiceRecords[card.getAttribute("data-practice-slug")]);
+      });
+      return list;
+    });
+  }
+
+  function initPracticeAreas() {
+    var cards = $$("[data-practice-slug]");
+    if (!cards.length) { return; }
+
+    bindPracticeModal();
+
+    cards.forEach(function (card) {
+      card.addEventListener("click", function () {
+        var record = practiceRecords[card.getAttribute("data-practice-slug")];
+        openPracticeModal(card, record);
+      });
+    });
+
+    loadPracticeAreas();
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Team members
+   * ------------------------------------------------------------------ */
+
+  function initTeamMembers() {
+    var cards = $$(".team-card[data-pb-id]");
+    if (!cards.length || !global.PB) { return; }
+
+    global.PB.getTeamMembers().then(function (records) {
+      if (!records || !records.length) { return; }
+
+      var bySlug = {};
+      records.forEach(function (record) { bySlug[record.slug] = record; });
+
+      cards.forEach(function (card) {
+        var record = bySlug[card.getAttribute("data-pb-id")];
+        if (!record) { return; }
+
+        var name = $("h3", card);
+        var role = $(".team-card__role", card);
+        var areas = $(".team-card__areas", card);
+        var monogram = $(".team-card__monogram", card);
+
+        if (name && record.name) { name.textContent = record.name; }
+        if (role && record.role) { role.textContent = record.role; }
+
+        var expertise = normalizeArray(record.expertise);
+        if (areas && expertise.length) {
+          areas.textContent = expertise.join(" · ");
+        }
+
+        var photo = record.photo && global.PB.fileUrl ? global.PB.fileUrl(record, record.photo) : "";
+        if (photo && monogram) {
+          monogram.innerHTML = '<img class="team-card__photo" src="' + escapeHtml(photo) +
+            '" alt="' + escapeHtml(record.name || "") + '" width="236" height="236" loading="lazy" decoding="async">';
+        }
+      });
+    });
+  }
+
+  /* ------------------------------------------------------------------ *
+   * FAQ accordion content
+   * ------------------------------------------------------------------ */
+
+  function buildFaqItem(item, index) {
+    var number = index + 1;
+    var question = escapeHtml(item.question || "");
+    return '<div class="faq__item">' +
+      "<h3>" +
+        '<button class="faq__q" type="button" id="faq-btn-' + number + '" aria-expanded="false" aria-controls="faq-a-' + number + '">' +
+          "<span>" + question + "</span>" +
+          '<svg class="icon faq__icon" aria-hidden="true"><use href="#i-plus"></use></svg>' +
+        "</button>" +
+      "</h3>" +
+      '<div class="faq__a" id="faq-a-' + number + '" role="region" aria-labelledby="faq-btn-' + number + '" hidden>' +
+        '<div class="faq__a-inner">' + sanitizeHtml(item.answer || "") + "</div>" +
+      "</div>" +
+    "</div>";
+  }
+
+  function initFaqContent() {
+    var list = $("[data-pb-faq]");
+    if (!list || !global.PB) { return; }
+
+    global.PB.getFaq().then(function (items) {
+      if (!items || !items.length) { return; }
+
+      list.innerHTML = items.map(buildFaqItem).join("");
+      if (global.SiteUI && typeof global.SiteUI.initFaq === "function") {
+        global.SiteUI.initFaq();
+      }
+    });
+  }
+
+  /* ------------------------------------------------------------------ *
    * Article detail page
    * ------------------------------------------------------------------ */
 
@@ -502,7 +886,7 @@
       var displayDate = formatDate(dateValue);
       var datetime = isoDate(dateValue);
       var canonical = (config.site && config.site.url ? config.site.url.replace(/\/+$/, "") : global.location.origin) +
-        "/makale.html?slug=" + encodeURIComponent(articleSlug(record));
+        "/makale/" + encodeURIComponent(articleSlug(record)) + "/";
 
       if (title) { title.textContent = articleTitle; }
       if (crumb) { crumb.textContent = articleTitle; }
@@ -631,5 +1015,8 @@
     global.PB.getSettings().then(applySettings);
     initHomeArticles();
     initArticlePage();
+    initPracticeAreas();
+    initTeamMembers();
+    initFaqContent();
   });
 })(window);

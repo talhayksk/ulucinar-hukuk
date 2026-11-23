@@ -5,14 +5,13 @@
  * free of secrets: only public endpoints and placeholder content live here.
  *
  * PocketBase:
- *  - Leave pocketbaseUrl empty when the site and PocketBase are served from the
- *    same origin (recommended, see README.md).
- *  - Append ?pb=http://127.0.0.1:8090 to any page for local development.
+ *  - Leave pocketbaseUrl empty: the site and PocketBase are served from the
+ *    same origin (pb_public), so no API override exists by design.
  */
 window.SITE_CONFIG = {
   /**
    * PocketBase base URL, for example "https://admin.ulucinar.av.tr".
-   * Empty means same-origin. A ?pb=... query parameter overrides this value.
+   * Empty means same-origin. There is no query-string override (security).
    */
   pocketbaseUrl: "",
 
@@ -20,6 +19,9 @@ window.SITE_CONFIG = {
   collections: {
     articles: "articles",
     settings: "site_settings",
+    practiceAreas: "practice_areas",
+    teamMembers: "team_members",
+    faq: "faq",
     contactMessages: "contact_messages"
   },
 
@@ -27,12 +29,10 @@ window.SITE_CONFIG = {
   articlesPerPage: 3,
 
   /**
-   * Form POST endpoint. When empty, the contact form falls back to mailto:.
-   * When set, it must accept JSON and answer with a 2xx status.
-   * Optional PocketBase value:
-   * "/api/collections/contact_messages/records"
+   * Form POST endpoint (same-origin PocketBase collection).
+   * When empty, the contact form falls back to mailto:.
    */
-  contactEndpoint: "",
+  contactEndpoint: "/api/collections/contact_messages/records",
 
   site: {
     name: "ULUÇINAR Hukuk & Danışmanlık",

@@ -674,9 +674,9 @@
         email: fieldByName("email").value.trim(),
         subject: fieldByName("subject").value,
         message: fieldByName("message").value.trim(),
-        kvkk: fieldByName("kvkk").checked,
+        kvkk_consent: fieldByName("kvkk").checked === true,
         source: "website",
-        page: window.location.href
+        page: window.location.pathname
       };
 
       if (!endpoint) {
@@ -692,16 +692,23 @@
         body: JSON.stringify(payload)
       })
         .then(function (response) {
-          if (!response.ok) { throw new Error("HTTP " + response.status); }
+          if (!response.ok) {
+            var httpError = new Error("HTTP " + response.status);
+            httpError.status = response.status;
+            throw httpError;
+          }
           form.reset();
           clearAll();
           showStatus("Mesajınız alındı. En kısa sürede size dönüş yapılacaktır.", "success");
         })
-        .catch(function () {
-          showStatus(
-            "Mesajınız şu anda gönderilemedi. Lütfen info@ulucinar.av.tr adresine e-posta gönderin veya WhatsApp'tan yazın.",
-            "error"
-          );
+        .catch(function (error) {
+          var message = "Mesajınız şu anda gönderilemedi. Lütfen info@ulucinar.av.tr adresine e-posta gönderin veya WhatsApp'tan yazın.";
+          if (error && error.status === 429) {
+            message = "Çok fazla deneme yapıldı. Lütfen bir dakika sonra tekrar deneyin.";
+          } else if (error && error.status === 400) {
+            message = "Form bilgileri doğrulanamadı. Lütfen alanları kontrol edip yeniden deneyin.";
+          }
+          showStatus(message, "error");
         })
         .then(function () {
           setLoading(false);
@@ -749,6 +756,10 @@
       });
     });
   }
+
+  /* Re-bind the accordion after PocketBase replaces the FAQ list. */
+  window.SiteUI = window.SiteUI || {};
+  window.SiteUI.initFaq = initFaq;
 
   /* ------------------------------------------------------------------ *
    * Boot

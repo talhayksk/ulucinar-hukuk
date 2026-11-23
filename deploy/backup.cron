@@ -1,0 +1,29 @@
+# ULUÇINAR Hukuk — nightly PocketBase backup.
+#
+# Install as /etc/cron.d/ulucinar-pocketbase-backup (root:root 0644):
+#   sudo cp deploy/backup.cron /etc/cron.d/ulucinar-pocketbase-backup
+#   sudo chmod 0644 /etc/cron.d/ulucinar-pocketbase-backup
+#
+# The script itself sets umask 077 and forces 0700/0600 on the copy, so the
+# archive contains superuser password hashes and client PII with owner-only
+# permissions. Read the retention/encryption notes in
+# scripts/pocketbase-backup.sh before copying archives off the host.
+#
+# flock prevents two runs from overlapping (e.g. a slow copy on a big DB).
+# Output goes to the journal via logger, so `journalctl -t ulucinar-backup`
+# shows the history and logrotate needs no extra file.
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# m  h  dom mon dow user     command
+0 3 * * * ulucinar /usr/bin/flock -n /run/lock/ulucinar-backup.lock /opt/ulucinar/scripts/pocketbase-backup.sh 2>&1 | /usr/bin/logger -t ulucinar-backup
+
+# Retention (example: keep 14 daily copies). Runs as root, after the copy.
+30 3 * * * root find /opt/ulucinar/pocketbase/backups -mindepth 1 -maxdepth 1 -type d -mtime +14 -exec rm -rf {} +
+
+# Off-site copy (example only; encrypt before it leaves the host):
+#   age -p -o /var/backups/ulucinar-$(date +%F).tar.age /opt/ulucinar/pocketbase/backups/$(date +%F)-*
+#
+# Consistency: this is a file-level copy of a live SQLite database. For a
+# guaranteed-consistent backup use the PocketBase dashboard (Settings ->
+# Backups) or stop the service for the duration of the copy.

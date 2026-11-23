@@ -3,7 +3,7 @@
  *
  * No SDK, no dependencies. Every method degrades gracefully: errors return
  * null/[] and set PB.lastError so callers can distinguish "not found" from
- * "network failed". Same-origin is the default; ?pb=<url> overrides it.
+ * "network failed". The API is always same-origin (no query-string override).
  */
 (function (global) {
   "use strict";
@@ -19,11 +19,10 @@
     return String(value || "").trim().replace(/\/+$/, "");
   }
 
+  // Always same-origin (or the explicitly configured base). The former
+  // ?pb=<url> override was removed: it let a shared link swap the whole
+  // content API for an attacker-controlled server.
   function baseUrl() {
-    try {
-      var override = new URLSearchParams(global.location.search).get("pb");
-      if (override) { return normalizeBase(override); }
-    } catch (err) { /* ignore malformed URLs */ }
     return normalizeBase(config.pocketbaseUrl);
   }
 
@@ -129,6 +128,51 @@
     }).then(function (data) {
       if (!data || !Array.isArray(data.items) || !data.items.length) { return null; }
       return data.items[0];
+    });
+  };
+
+  /**
+   * Published practice areas, ordered for the 3x3 grid.
+   */
+  PB.getPracticeAreas = function () {
+    var name = collection("practiceAreas", "practice_areas");
+    return request("/api/collections/" + encodeURIComponent(name) + "/records", {
+      filter: "(published=true)",
+      sort: "sort_order",
+      perPage: "100"
+    }).then(function (data) {
+      if (!data || !Array.isArray(data.items)) { return []; }
+      return data.items;
+    });
+  };
+
+  /**
+   * Published team members, ordered for the team grid.
+   */
+  PB.getTeamMembers = function () {
+    var name = collection("teamMembers", "team_members");
+    return request("/api/collections/" + encodeURIComponent(name) + "/records", {
+      filter: "(published=true)",
+      sort: "sort_order",
+      perPage: "100"
+    }).then(function (data) {
+      if (!data || !Array.isArray(data.items)) { return []; }
+      return data.items;
+    });
+  };
+
+  /**
+   * Published FAQ entries, ordered for the accordion.
+   */
+  PB.getFaq = function () {
+    var name = collection("faq", "faq");
+    return request("/api/collections/" + encodeURIComponent(name) + "/records", {
+      filter: "(published=true)",
+      sort: "sort_order",
+      perPage: "100"
+    }).then(function (data) {
+      if (!data || !Array.isArray(data.items)) { return []; }
+      return data.items;
     });
   };
 

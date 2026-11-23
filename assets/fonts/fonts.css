@@ -1,0 +1,15 @@
+/* Self-hosted brand fonts — OFL licensed (see OFL-*.txt). */
+@font-face {
+  font-family: "Cinzel";
+  src: url("Cinzel-Variable.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  src: url("Manrope-Variable.woff2") format("woff2");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}

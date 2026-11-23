@@ -2324,3 +2324,192 @@ html.js.intro-done .hero__slides {
   .article-hero__title { color: #000 !important; }
   .article-body-section { padding: 0; }
 }
+
+/* ==================================================================== *
+ * Practice cards: centered layout + button semantics
+ * ==================================================================== */
+.practice__link {
+  width: 100%;
+  font: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  appearance: none;
+  align-items: center;
+  text-align: center;
+}
+.practice__link .icon--xl,
+.practice__link h3,
+.practice__link p { margin-inline: auto; }
+.practice__link p { max-width: 34ch; }
+.practice__more {
+  justify-content: center;
+  align-self: center;
+}
+.practice__link:focus-visible {
+  outline: 2px solid var(--gold-300);
+  outline-offset: -6px;
+}
+
+/* Team card photo (when the record has an uploaded image) */
+.team-card__photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* ==================================================================== *
+ * Practice detail modal
+ * ==================================================================== */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(14px, 3vw, 32px);
+}
+.modal[hidden] { display: none; }
+
+.modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 10, 18, .78);
+  backdrop-filter: blur(3px);
+}
+
+.modal__dialog {
+  position: relative;
+  width: min(680px, 100%);
+  max-height: min(86vh, 780px);
+  overflow-y: auto;
+  padding: clamp(26px, 4vw, 46px);
+  color: rgba(247, 244, 238, .82);
+  background: #0b1a2e;
+  border: 1px solid rgba(212, 178, 106, .45);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, .55);
+}
+.modal__dialog:focus { outline: none; }
+
+.modal__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  color: var(--gold-300);
+  background: transparent;
+  border: 1px solid rgba(212, 178, 106, .35);
+  cursor: pointer;
+}
+.modal__close:hover,
+.modal__close:focus-visible { border-color: var(--gold-300); }
+.modal__close .icon { width: 18px; height: 18px; }
+
+.modal__eyebrow {
+  margin-bottom: 10px;
+  color: var(--gold-400);
+  font-size: .6rem;
+  letter-spacing: .26em;
+  text-transform: uppercase;
+}
+
+.modal__head {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-right: 36px;
+}
+.modal__icon {
+  flex: none;
+  margin: 0;
+  color: var(--gold-400);
+}
+.modal__title {
+  margin: 0;
+  color: #fbf8f1;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: left;
+}
+
+.modal__summary {
+  margin-bottom: 20px;
+  color: rgba(247, 244, 238, .72);
+  font-size: .95rem;
+  line-height: 1.75;
+}
+
+.modal__body {
+  color: rgba(247, 244, 238, .78);
+  font-size: .95rem;
+}
+.modal__body > * + * { margin-top: 1em; }
+.modal__body h2,
+.modal__body h3,
+.modal__body h4 {
+  margin: 1.5em 0 .5em;
+  color: #fbf8f1;
+  font-family: var(--font-display);
+  font-weight: 500;
+  line-height: 1.3;
+}
+.modal__body h2 { font-size: 1.3rem; }
+.modal__body h3 { font-size: 1.12rem; }
+.modal__body h4 { font-size: 1rem; }
+.modal__body a { color: var(--gold-300); }
+.modal__body ul,
+.modal__body ol { padding-left: 1.25em; }
+.modal__body li + li { margin-top: .4em; }
+.modal__body blockquote {
+  margin: 1.2em 0;
+  padding-left: 1em;
+  border-left: 1px solid rgba(212, 178, 106, .5);
+  color: rgba(247, 244, 238, .7);
+  font-style: italic;
+}
+
+.modal__error {
+  margin-top: 10px;
+  padding: 16px;
+  border: 1px solid rgba(212, 178, 106, .3);
+  font-size: .9rem;
+}
+.modal__error p { margin-bottom: 12px; }
+.modal__error[hidden] { display: none; }
+
+.modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+body.modal-open { overflow: hidden; }
+
+@media (max-width: 560px) {
+  .modal__head { gap: 12px; }
+  .modal__icon { width: 30px; height: 30px; }
+  .modal__dialog { max-height: 90vh; }
+}
+
+/* Ghost buttons inside the dark modal (buttons have a UA background by default) */
+.modal .btn--ghost {
+  background: transparent;
+  border-color: rgba(212, 178, 106, .6);
+  color: var(--cream);
+}
+.modal .btn--ghost:hover,
+.modal .btn--ghost:focus-visible {
+  background: var(--gold-500);
+  border-color: var(--gold-500);
+  color: var(--navy-950);
+}

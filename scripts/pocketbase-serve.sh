@@ -42,4 +42,5 @@ exec "$PB_BIN" serve \
   --migrationsDir="$PB_DIR/pb_migrations" \
   --publicDir="$PB_DIR/pb_public" \
   --hooksDir="$PB_DIR/pb_hooks" \
+  --indexFallback=false \
   --origins="$ORIGINS"

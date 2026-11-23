@@ -1,0 +1,125 @@
+name: CI
+
+# Pull request and branch gate for the ULUÇINAR Hukuk site (static pages +
+# PocketBase CMS). No secrets, no private registries, nothing is deployed from
+# here: this workflow only proves that the repository can be published.
+#
+# Jobs
+#   static  JS syntax, shell syntax, HTML/SEO metadata, SSR template markers,
+#           local asset integrity, repo hygiene (no pb_data / binary / .env).
+#   e2e     Boots a throwaway PocketBase (downloaded release, checksum
+#           verified) from pb_migrations + pb_hooks and checks health, sitemap,
+#           robots, server-rendered article pages, the legacy 301 and the KVKK
+#           guard. Skips with a notice if the release binary is unreachable.
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  POCKETBASE_VERSION: "0.42.3"
+  # "false" => release blockers (O-05 external CDNs, Y-02 ?pb=, Y-03 contact
+  # endpoint) are reported as warnings. Flip to "true" for the release run:
+  # see the checklist in .team/11-release.md.
+  RELEASE_GATE: "false"
+
+jobs:
+  static:
+    name: Static checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Toolchain
+        run: |
+          node --version
+          python3 --version
+          git --version
+
+      - name: JavaScript syntax (node --check)
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(assets/js/*.js)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "::error::no JavaScript files found under assets/js"
+            exit 1
+          fi
+          for file in "${files[@]}"; do
+            node --check "$file"
+            echo "ok  $file"
+          done
+
+      - name: Shell syntax (bash -n)
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(scripts/*.sh .github/ci/*.sh)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "::error::no shell scripts found"
+            exit 1
+          fi
+          for file in "${files[@]}"; do
+            bash -n "$file"
+            echo "ok  $file"
+          done
+
+      - name: Site checks (HTML/SEO metadata, assets, SSR markers, repo hygiene)
+        run: |
+          set -euo pipefail
+          if [ "${RELEASE_GATE}" = "true" ]; then
+            python3 .github/ci/check-site.py --release-gate
+          else
+            python3 .github/ci/check-site.py
+            echo "::notice::advisory mode: set RELEASE_GATE=true to enforce release blockers"
+          fi
+
+  e2e:
+    name: PocketBase E2E
+    needs: static
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PB_VERSION: "0.42.3"
+      PB_E2E_PORT: "8091"
+      PB_E2E_WORKDIR: ${{ runner.temp }}/pb-e2e
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show tooling
+        run: |
+          curl --version | head -n1
+          unzip -v | head -n1 || true
+          python3 --version
+
+      - name: Run PocketBase E2E
+        run: ./.github/ci/pocketbase-e2e.sh
+
+      - name: Upload server log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pocketbase-e2e-logs
+          path: ${{ runner.temp }}/pb-e2e/**/*.log
+          retention-days: 7
+          if-no-files-found: ignore

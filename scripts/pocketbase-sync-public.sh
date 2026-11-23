@@ -3,8 +3,9 @@
 # next to the REST API and the admin panel.
 #
 # Copies the root-level *.html pages (except the reference template) and the
-# assets/ directory. Only pocketbase/pb_public is written; every other
-# directory is left alone.
+# assets/ directory. Generated SEO artifacts (pb_public/makale/**, sitemap.xml,
+# robots.txt) are preserved: they are rebuilt by the server hooks, not by this
+# script. Nothing outside pocketbase/pb_public is touched.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -31,8 +32,11 @@ if [[ ${#html_files[@]} -eq 0 ]]; then
   exit 1
 fi
 
-rm -rf "$PUBLIC_DIR"
 mkdir -p "$PUBLIC_DIR"
+
+# Remove only the files owned by this script; keep generated SEO output.
+rm -f "$PUBLIC_DIR"/*.html
+rm -rf "$PUBLIC_DIR/assets"
 
 cp -a "${html_files[@]}" "$PUBLIC_DIR/"
 
@@ -41,4 +45,7 @@ if [[ -d "$ROOT_DIR/assets" ]]; then
 fi
 
 echo "Published to $PUBLIC_DIR"
-find "$PUBLIC_DIR" -type f | sort | sed "s|$ROOT_DIR/||"
+find "$PUBLIC_DIR" -maxdepth 1 -type f | sort | sed "s|$ROOT_DIR/|  |"
+if [[ -d "$PUBLIC_DIR/makale" ]]; then
+  echo "Preserved generated article pages: $(find "$PUBLIC_DIR/makale" -name index.html | wc -l)"
+fi
