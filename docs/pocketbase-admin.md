@@ -116,6 +116,10 @@ Yayın kontrol listesi:
 
 **Collections → site_settings**
 
+Gerçek iletişim bilgileri: telefon `+90 (501) 943 63 41`, WhatsApp `https://wa.me/905019436341`,
+adres `Karabaş Mh. Cumhuriyet Blv. No:177/2, İzmit / KOCAELİ`. E-posta, çalışma saatleri,
+istatistikler, ekip isim/fotoğrafları ve KVKK metni henüz yer tutucudur; yayın öncesi güncellenmeli.
+
 Bu koleksiyonda **tek kayıt** olmalıdır. Yanlışlıkla ikinci kayıt oluşturmayın; site ilk kaydı
 kullanır. Kayıt sayısı 1'den fazlaysa fazlalıkları silin.
 
@@ -264,13 +268,12 @@ deneyin.
 | Makale sitede görünmüyor | `status` `published` değil; `published_at` boş/eski; ana sayfa yalnızca son 3 kaydı gösterir. |
 | Makale adresi 404 | Slug yanlış veya kayıt taslak. `/makale/<slug>/` adresini kontrol edin. |
 | Slug hatası (400) | Büyük harf, Türkçe karakter, boşluk veya `../` var. Küçük harf/rakam/tire kullanın. |
-| Görsel kırık | `cover` yüklenmemiş ve `cover_url` geçersiz; tam `https://` adresi kullanın veya dosya yükleyin. |
+| Görsel kırık | `cover` yüklenmemiş veya harici `cover_url` kullanılıyor; güvenlik politikası harici görselleri engeller. Dosya yükleyin. |
 | “Slug already exists” | Aynı `slug` başka kayıtta var. Benzersiz bir slug seçin. |
-| Form mesajı panele düşmüyor | Form güncellemesi henüz tamamlanmamış olabilir; `kvkk_consent` gönderilmiyor veya endpoint boş. Geliştiriciye bildirin. |
+| Form mesajı panele düşmüyor | Sunucu ve `/api/health` çalışıyor mu kontrol edin; form gönderiminde hata varsa tarayıcı konsoluna ve sunucu loglarına bakın. |
 | Form 400 hatası | KVKK onayı işaretlenmemiş ya da `kvkk_consent` gönderilmiyor. |
 | Form 429 hatası | Dakikada 5 gönderim sınırı aşıldı; bir dakika sonra tekrar deneyin. |
 | Telefon/adres değişmedi | `site_settings` kaydını kaydedin, sayfayı yenileyin; önbelleği temizleyin. |
-| Yeni hero/hakkımızda metni görünmüyor | Bu alanların sayfaya bağlanması sürüyor; kayıt doğru olsa da frontend güncellemesi gerekir. |
 | Panel açılmıyor | Sunucu çalışmıyor veya adres yanlış. `./scripts/pocketbase-serve.sh` çıktısını kontrol edin. |
 
 ## 11. Güvenlik kuralları
@@ -278,9 +281,9 @@ deneyin.
 - Süper kullanıcı şifresini yalnızca yetkili kişiler bilmeli; düzenli aralıklarla değiştirin.
 - Paneli herkese açık internete korumasız bırakmayın; proxy'de IP kısıtı, VPN veya ek kimlik
   doğrulama kullanın. Mümkünse MFA'yı açın.
-- Makale gövdesine üçüncü taraflardan script, iframe, style veya bilinmeyen etiketler
-  yapıştırmayın. Sunucu makale gövdelerini temizler, ancak yalnız güvenilir editörlerin yazması
-  esastır. Hakkımızda metni gibi henüz sayfaya bağlanmamış HTML alanlarında da sade metin kullanın.
+- Makale gövdesine ve hakkımızda metnine üçüncü taraflardan script, iframe, style veya bilinmeyen
+  etiketler yapıştırmayın. Sunucu/tarayıcı izin verilmeyen etiketleri temizler, ancak yalnız
+  güvenilir editörlerin yazması esastır.
 - Formdan gelen kişisel verileri yalnız yetkili kişilerle paylaşın; yedeği şifreli saklayın.
 - Yedekleri ve `pb_data/` klasörünü git deposuna, e-posta veya mesajlaşmaya koymayın.
 - Şüpheli girişleri **Logs** bölümünden kontrol edin; art arda başarısız girişlerde şifreyi
