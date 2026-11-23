@@ -20,7 +20,8 @@ technical SEO and the operational tooling needed to host it.
   favicon (`favicon.svg`, `favicon-32.png`, `favicon-512.png`) and
   `apple-touch-icon.png`.
 - Self-hosted typography and photography: Cinzel + Manrope variable fonts
-  (`assets/fonts/`, OFL licensed) and 38 WebP/JPEG images in `assets/img/`.
+  (`assets/fonts/`, OFL licensed) and 38 image files in `assets/img/`
+  (WebP/JPEG renditions plus the OG cover).
   No third-party font or image CDN is referenced by the shipped pages.
 - Opening sequence: gold logo fill animation (~2.6 s) with a 650 ms exit, shown on
   every full page load; `?intro=off` and `prefers-reduced-motion` skip or
@@ -110,12 +111,11 @@ technical SEO and the operational tooling needed to host it.
 
 ### Known limitations
 
-- Real domain, NAP data, team identities, statistics and the full KVKK
-  disclosure text still have to be supplied by the client; placeholders are
-  labelled as such in the admin panel and in the site code.
-- Unknown paths are answered by the homepage (`indexFallback` is on) unless
-  PocketBase is started with `--indexFallback=false`; enable it to avoid soft
-  404s once the site goes live.
+- Real domain, e-mail, working hours, team identities/photos, statistics and the
+  full KVKK disclosure text still have to be supplied by the client;
+  placeholders are labelled as such in the admin panel and in the site code.
+- The serve script runs with `--indexFallback=false`, so unknown paths return
+  `404` (verified: `/api/nope`, `/assets/nope`, `/nope`).
 - Article covers stored as external URLs are blocked by the image CSP; upload
   them to the `cover` file field to display them.
 - Lighthouse and Rich Results testing were not run without a live domain;
