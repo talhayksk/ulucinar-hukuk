@@ -1024,7 +1024,8 @@ html.js.intro-done .hero__slides {
   transform: translateY(-2px);
 }
 
-.practice h3 {
+.practice__title {
+  display: block;
   margin: 0 0 12px;
   color: #fbf8f1;
   font-family: var(--font-display);
@@ -1034,7 +1035,8 @@ html.js.intro-done .hero__slides {
   line-height: 1.4;
 }
 
-.practice p {
+.practice__desc {
+  display: block;
   flex: 1;
   margin: 0 0 22px;
   color: rgba(247, 244, 238, .63);
@@ -2355,9 +2357,9 @@ html.js.intro-done .hero__slides {
   text-align: center;
 }
 .practice__link .icon--xl,
-.practice__link h3,
-.practice__link p { margin-inline: auto; }
-.practice__link p { max-width: 34ch; }
+.practice__title,
+.practice__desc { margin-inline: auto; }
+.practice__desc { max-width: 34ch; }
 .practice__more {
   justify-content: center;
   align-self: center;

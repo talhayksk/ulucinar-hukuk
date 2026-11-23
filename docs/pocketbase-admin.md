@@ -7,9 +7,9 @@ Panel İngilizce arayüzlüdür; alan adları kodla aynıdır, açıklamalar Tü
 - Yayındaki adres: `https://<alan-adiniz>/_/` (yayına geçince)
 - Sürüm: PocketBase 0.42.3
 
-> Site şu anda geliştirme aşamasındadır. İçerik alanlarının bir kısmı panelde düzenlenebilir ve
-> API'de hazırdır; sayfada görünmesi için frontend bağlantısının tamamlanması beklenmektedir.
-> Aşağıdaki tablolarda bu durum belirtilmiştir.
+> Site yayın adayıdır (v0.1.0). Tüm sayfa bölümleri ve form PocketBase'e bağlıdır. Kalan işler
+> içerik ve yayın girdileridir: alan adı, e-posta, çalışma saatleri, istatistikler, ekip
+> isim/fotoğrafları, sosyal adresler ve tam KVKK metni. Bunlar aşağıda ayrıca işaretlenmiştir.
 
 ## 1. Giriş ve hesap
 
@@ -48,8 +48,8 @@ satıra tıklayınca düzenleme formu açılır.
 | `slug` | Evet | URL'de görünecek kısa ad. **Benzersiz** olmalı. Yalnız küçük harf, rakam ve tek tire: `aile-hukukunda-uzlasma`. Türkçe karakter, boşluk, büyük harf ve `../` gibi karakterler reddedilir. |
 | `excerpt` | Hayır | Ana sayfa kartında görünen 1–2 cümlelik özet |
 | `body` | Hayır | Makalenin HTML gövdesi (başlık, paragraf, liste, alıntı) |
-| `cover` | Hayır | Kapak görseli dosyası (JPEG/PNG/WebP, en fazla 5 MB; tek dosya) |
-| `cover_url` | Hayır | Dosya yüklemediyseniz harici kapak görseli adresi |
+| `cover` | Hayır | Kapak görseli dosyası (JPEG/PNG/WebP, en fazla 5 MB; tek dosya). **Önerilen yöntem.** |
+| `cover_url` | Hayır | Harici kapak adresi. Mevcut güvenlik politikası (CSP) harici görselleri engellediği için sitede görünmez; kullanmayın. |
 | `published_at` | Hayır | Yayın tarihi. Ana sayfa sıralaması bu alana göre **yeniden eskiye** yapılır. |
 | `status` | Evet | `draft` (taslak) veya `published` (yayında) |
 | `author` | Hayır | Görünen yazar adı |
@@ -61,9 +61,9 @@ Notlar:
 
 - `status` boş bırakılırsa kayıt otomatik olarak **draft** kaydedilir. Bu, yanlışlıkla yayına
   almayı önler.
-- Kapak için önce `cover` dosyasını yükleyin. Dosya yoksa `cover_url` kullanılır; o da yoksa
-  kartta görsel alanı boş kalır. Yayın öncesi harici görselleri dosya olarak yüklemek daha
-  güvenlidir.
+- Kapak için **dosya yükleyin** (`cover`). Sitenin güvenlik politikası yalnız kendi sunucusundan
+  gelen görsellere izin verir; `cover_url` ile verilen harici adresler tarayıcıda gösterilmez.
+  Yükleme yapılmazsa kartta görsel alanı boş kalır.
 - Makale bağlantısı `slug` ile kurulur: `/makale/<slug>/`. Yayından sonra `slug` değiştirirseniz
   eski bağlantı kırılır ve eski sayfa kaldırılır; mevcut makalelerde değiştirmemeye çalışın.
 - `body` alanı HTML kabul eder. Yalnız izin verilen biçimlendirme korunur: paragraf, `h2`–`h4`,

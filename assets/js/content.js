@@ -567,8 +567,8 @@
     var dialog = $(".modal__dialog", modal);
     var closeBtn = $(".modal__close", modal);
 
-    var name = record && record.title ? record.title : (trigger.getAttribute("data-title") || $("h3", trigger).textContent);
-    var text = record && record.summary ? record.summary : $("p", trigger).textContent;
+    var name = record && record.title ? record.title : (trigger.getAttribute("data-title") || $(".practice__title", trigger).textContent);
+    var text = record && record.summary ? record.summary : $(".practice__desc", trigger).textContent;
     var html = record && record.body ? record.body : "";
 
     if (title) { title.textContent = String(name || "Çalışma alanı"); }
@@ -669,8 +669,8 @@
   function hydratePracticeCard(card, record) {
     if (!card || !record) { return; }
     var icon = $("use", card);
-    var title = $("h3", card);
-    var text = $("p", card);
+    var title = $(".practice__title", card);
+    var text = $(".practice__desc", card);
 
     if (icon) { icon.setAttribute("href", practiceIcon(record.icon)); }
     if (title && record.title) { title.textContent = record.title; }

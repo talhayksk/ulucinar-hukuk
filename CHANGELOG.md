@@ -22,8 +22,17 @@ technical SEO and the operational tooling needed to host it.
 - Self-hosted typography and photography: Cinzel + Manrope variable fonts
   (`assets/fonts/`, OFL licensed) and 38 WebP/JPEG images in `assets/img/`.
   No third-party font or image CDN is referenced by the shipped pages.
-- Opening sequence: gold logo fill animation (~2.6 s) with a reduced-motion and
-  `?intro=off` escape hatch, no FOUC and no repeat on later page loads.
+- Opening sequence: gold logo fill animation (~2.6 s) with a 650 ms exit, shown on
+  every full page load; `?intro=off` and `prefers-reduced-motion` skip or
+  shorten it, and there is no FOUC.
+- Photography set refreshed with nine Pexels photographs (responsive WebP/JPEG
+  renditions, 38 files in `assets/img/`), including a people-free mediation
+  cover (`article-mediation-v2`); source URLs and the Pexels licence note are
+  in `assets/img/CREDITS.md`.
+- FAQPage structured data generated from the visible FAQ section, plus the
+  real İzmit/Kocaeli address and phone in `LegalService` JSON-LD.
+- WhatsApp icons use the official solid glyph in the hero, contact block,
+  footer and floating button.
 - Article template (`makale.html`) with loading, error and not-found states,
   client-side PocketBase rendering for preview use.
 - PocketBase 0.42.3 backend (`pocketbase/`): collections for `site_settings`,
@@ -80,12 +89,18 @@ technical SEO and the operational tooling needed to host it.
   removed at render time and `[data-ssr="1"]` marks the page.
 - Backups and the live data directory are written owner-only (`0700/0600`)
   with `umask 077`.
+- WCAG AA contrast for small gold text on navy/cream surfaces (links, labels
+  and meta text adjusted without changing the palette).
 
 ### Security
 
 - Content-Security-Policy, `Referrer-Policy`, `Permissions-Policy`,
   `X-Frame-Options: DENY` and `X-Content-Type-Options: nosniff` on all public
-  responses; HSTS whenever the request arrives over TLS.
+  responses; HSTS whenever the request arrives over TLS. The CSP is
+  same-origin only: self-hosted fonts and images, `connect-src 'self'`, no
+  Google Fonts, Unsplash or localhost exceptions.
+- External `cover_url` images are blocked by the image CSP; article covers must
+  be uploaded to the `cover` file field or stored under `assets/img/`.
 - Admin panel (`/_/`) and superuser endpoints kept off the public surface:
   loopback bind, `X-Robots-Tag: noindex`, and an nginx IP allow-list plus
   dedicated rate limits in the reference deployment.
@@ -101,7 +116,9 @@ technical SEO and the operational tooling needed to host it.
 - Unknown paths are answered by the homepage (`indexFallback` is on) unless
   PocketBase is started with `--indexFallback=false`; enable it to avoid soft
   404s once the site goes live.
-- Article covers stored as external URLs keep an external dependency; upload
-  them to the `cover` file field to remove it.
+- Article covers stored as external URLs are blocked by the image CSP; upload
+  them to the `cover` file field to display them.
+- Lighthouse and Rich Results testing were not run without a live domain;
+  Search Console verification and sitemap submission are still pending.
 
 [0.1.0]: https://github.com/talhayksk/ulucinar-hukuk/releases/tag/v0.1.0
