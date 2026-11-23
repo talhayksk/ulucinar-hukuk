@@ -316,6 +316,8 @@ reviews/ratings to structured data.
   composed 1200×630 `og-cover.jpg`/`.png`. The mediation article cover is a people-free composition.
   Source URLs and licence notes are in [`assets/img/CREDITS.md`](assets/img/CREDITS.md); the Pexels
   licence allows commercial use without attribution.
+- WhatsApp controls in the hero, contact block, footer and floating button use the official solid
+  WhatsApp glyph, tinted with `currentColor` to keep contrast on navy and gold surfaces.
 - Open Graph image: `assets/img/og-cover.jpg` (1200×630), referenced absolutely from
   `https://www.ulucinar.av.tr/assets/img/og-cover.jpg`. Update the absolute URL with the domain.
 
