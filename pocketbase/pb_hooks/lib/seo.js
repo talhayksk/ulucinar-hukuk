@@ -35,6 +35,14 @@ var TR_MONTHS = [
 
 var BODY_MARKER = "@@ULUCINAR_ARTICLE_BODY@@";
 
+var ARCHIVE_MARKERS = [
+  "<title>",
+  'rel="canonical"',
+  'id="archiveGrid"',
+  "<!-- archive:cards -->",
+  'id="archiveJsonLd"',
+];
+
 /* ------------------------------------------------------------------ *
  * Paths and IO
  * ------------------------------------------------------------------ */
@@ -53,6 +61,14 @@ function templatePath() {
 
 function articleRoot() {
   return publicDir() + "/makale";
+}
+
+function archiveTemplatePath() {
+  return publicDir() + "/makaleler.html";
+}
+
+function archiveOutputPath() {
+  return publicDir() + "/makaleler/index.html";
 }
 
 function articlePath(slug) {
@@ -225,12 +241,25 @@ function isoDateTime(value) {
  * Article field helpers
  * ------------------------------------------------------------------ */
 
-function articleCover(record, siteUrl) {
+// Root-relative path for <img> tags (works on any host/CSP 'self').
+function articleCoverPath(record) {
   var file = get(record, "cover");
   if (file) {
-    return siteUrl + "/api/files/articles/" + record.id + "/" + file;
+    return "/api/files/articles/" + record.id + "/" + file;
   }
   return get(record, "cover_url");
+}
+
+function absolutize(url, siteUrl) {
+  if (url && url.indexOf("/") === 0) {
+    return siteUrl + url;
+  }
+  return url;
+}
+
+// Absolute URL (Open Graph / JSON-LD require it).
+function articleCover(record, siteUrl) {
+  return absolutize(articleCoverPath(record), siteUrl);
 }
 
 function ogImage(record, settings, siteUrl) {
@@ -243,7 +272,7 @@ function ogImage(record, settings, siteUrl) {
     return cover;
   }
   var fallback = get(settings, "og_image_url");
-  return fallback || siteUrl + "/assets/logo/ulucinar-gold.png";
+  return absolutize(fallback, siteUrl) || siteUrl + "/assets/logo/ulucinar-gold.png";
 }
 
 // Re-serialized from an allow-list (see lib/sanitize.js). Admin content is
@@ -325,6 +354,56 @@ function applySetting(html, key, text, href) {
   });
 }
 
+// Root-relative URLs so a page served from /makale/<slug>/ or /makaleler/
+// resolves the same assets and links as the root document.
+function rootifyHtml(html) {
+  var out = html.replace(/(href|src)="assets\//g, '$1="/assets/');
+  out = out.replace(/content="assets\//g, 'content="/assets/');
+  out = out.replace(/href="index\.html(#[^"]*)?"/g, function (match, hash) {
+    return 'href="/' + (hash || "") + '"';
+  });
+  out = out.replace(/href="(instagram|linkedin)"/g, 'href="#"');
+  return out;
+}
+
+// Contact details / social links from site_settings (works without JS).
+function applySiteSettings(html, settings) {
+  if (!settings) {
+    return html;
+  }
+  var phone = get(settings, "phone");
+  var email = get(settings, "email");
+  var address = get(settings, "address");
+  var tagline = get(settings, "tagline");
+  var whatsapp = get(settings, "whatsapp");
+  var socials = parseJson(settings.get("socials")) || {};
+
+  if (phone) {
+    html = applySetting(html, "phone", displayPhone(phone), telHref(phone));
+  }
+  if (email) {
+    html = applySetting(html, "email", email, "mailto:" + email);
+  }
+  if (address) {
+    html = applySetting(html, "address", address, "");
+  }
+  if (tagline) {
+    html = applySetting(html, "tagline", tagline, "");
+  }
+  if (whatsapp) {
+    html = applySetting(html, "whatsapp", "", whatsapp);
+  }
+  var instagram = socials["instagram"] || "";
+  if (instagram) {
+    html = applySetting(html, "instagram", "", instagram);
+  }
+  var linkedin = socials["linkedin"] || "";
+  if (linkedin) {
+    html = applySetting(html, "linkedin", "", linkedin);
+  }
+  return html;
+}
+
 function renderArticlePage(template, record, settings, siteUrl) {
   var slug = get(record, "slug");
   var title = get(record, "title") || slug;
@@ -338,7 +417,7 @@ function renderArticlePage(template, record, settings, siteUrl) {
   var published = get(record, "published_at") || get(record, "created");
   var updated = get(record, "updated") || published;
   var author = get(record, "author") || firm;
-  var cover = articleCover(record, siteUrl);
+  var cover = articleCoverPath(record);
   var image = ogImage(record, settings, siteUrl);
   var bodyHtml = sanitizeBody(get(record, "body"));
   var printedDate = displayDate(published);
@@ -366,12 +445,7 @@ function renderArticlePage(template, record, settings, siteUrl) {
   html = html.replace(/[ \t]*<p[^>]*id="copyStatus"[^>]*>[\s\S]*?<\/p>\s*/i, "");
 
   // Pages live in subdirectories: every site-relative URL becomes root-absolute.
-  html = html.replace(/(href|src)="assets\//g, '$1="/assets/');
-  html = html.replace(/content="assets\//g, 'content="/assets/');
-  html = html.replace(/href="index\.html(#[^"]*)?"/g, function (match, hash) {
-    return 'href="/' + (hash || "") + '"';
-  });
-  html = html.replace(/href="(instagram|linkedin)"/g, 'href="#"');
+  html = rootifyHtml(html);
 
   // Head: title, description, canonical, Open Graph, Twitter.
   html = html.replace(/<title>[\s\S]*?<\/title>/i, function () {
@@ -531,40 +605,142 @@ function renderArticlePage(template, record, settings, siteUrl) {
   });
 
   // Contact details from site_settings so no-JS visitors see the same NAP.
-  if (settings) {
-    var phone = get(settings, "phone");
-    var email = get(settings, "email");
-    var address = get(settings, "address");
-    var tagline = get(settings, "tagline");
-    var whatsapp = get(settings, "whatsapp");
-    var socials = parseJson(settings.get("socials")) || {};
-
-    if (phone) {
-      html = applySetting(html, "phone", displayPhone(phone), telHref(phone));
-    }
-    if (email) {
-      html = applySetting(html, "email", email, "mailto:" + email);
-    }
-    if (address) {
-      html = applySetting(html, "address", address, "");
-    }
-    if (tagline) {
-      html = applySetting(html, "tagline", tagline, "");
-    }
-    if (whatsapp) {
-      html = applySetting(html, "whatsapp", "", whatsapp);
-    }
-    var instagram = socials["instagram"] || "";
-    if (instagram) {
-      html = applySetting(html, "instagram", "", instagram);
-    }
-    var linkedin = socials["linkedin"] || "";
-    if (linkedin) {
-      html = applySetting(html, "linkedin", "", linkedin);
-    }
-  }
+  html = applySiteSettings(html, settings);
 
   return { html: html, canonical: canonical, title: title, slug: slug };
+}
+
+/* ------------------------------------------------------------------ *
+ * Archive page (/makaleler/)
+ * ------------------------------------------------------------------ */
+
+function archiveCardHtml(record, siteUrl) {
+  var slug = get(record, "slug");
+  var title = get(record, "title") || slug;
+  var category = get(record, "category") || "Genel";
+  var excerpt = get(record, "excerpt") || "";
+  var tags = parseJson(record.get("tags"));
+  if (!tags || typeof tags.length !== "number") {
+    tags = [];
+  }
+  var cover = articleCoverPath(record);
+  var published = get(record, "published_at") || get(record, "created");
+  var printedDate = displayDate(published);
+  var iso = dateOnly(published);
+  var href = "/makale/" + encodeURIComponent(slug) + "/";
+  var search = [title, excerpt, category, tags.join(" ")].join(" ").toLowerCase();
+
+  var media = cover
+    ? '<img src="' + escapeHtml(cover) + '" alt="" width="800" height="500" loading="lazy" decoding="async">'
+    : '<span class="article__placeholder" aria-hidden="true"></span>';
+
+  var meta = "";
+  if (printedDate) {
+    meta = '<time datetime="' + escapeHtml(iso) + '">' + escapeHtml(printedDate) + "</time> · ";
+  }
+  meta += escapeHtml(category);
+
+  return (
+    '<article class="article" data-category="' + escapeHtml(category) + '" data-search="' + escapeHtml(search) + '">' +
+      '<a class="article__media media' + (cover ? "" : " media--placeholder") + '" href="' + href + '" aria-hidden="true" tabindex="-1">' +
+        media +
+      "</a>" +
+      '<div class="article__body">' +
+        '<p class="article__meta">' + meta + "</p>" +
+        '<h3><a href="' + href + '">' + escapeHtml(title) + "</a></h3>" +
+        "<p>" + escapeHtml(excerpt) + "</p>" +
+        '<a class="article__more" href="' + href + '" tabindex="-1" aria-hidden="true">Devamını Oku ' +
+          '<svg class="icon" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a>' +
+      "</div>" +
+    "</article>"
+  );
+}
+
+function renderArchivePage(template, articles, settings, siteUrl) {
+  var firm = get(settings, "firm_name") || "ULUÇINAR Hukuk & Danışmanlık";
+  var pageTitle = "Makaleler | " + firm;
+  var description =
+    "ULUÇINAR Hukuk & Danışmanlık makale arşivi: aile, ceza, ticaret, iş, gayrimenkul, " +
+    "miras ve icra hukuku üzerine sade ve bilgilendirici yazılar.";
+  var canonical = siteUrl + "/makaleler/";
+  var image = get(settings, "og_image_url") || siteUrl + "/assets/img/og-cover.jpg";
+  var html = rootifyHtml(template);
+
+  html = html.replace(/<title>[\s\S]*?<\/title>/i, function () {
+    return "<title>" + escapeHtml(pageTitle) + "</title>";
+  });
+  html = setMetaTag(html, "name", "description", description);
+  html = setMetaTag(html, "property", "og:type", "website");
+  html = setMetaTag(html, "property", "og:title", pageTitle);
+  html = setMetaTag(html, "property", "og:description", description);
+  html = setMetaTag(html, "property", "og:url", canonical);
+  html = setMetaTag(html, "property", "og:image", image);
+  html = setMetaTag(html, "name", "twitter:title", pageTitle);
+  html = setMetaTag(html, "name", "twitter:description", description);
+  html = setMetaTag(html, "name", "twitter:image", image);
+  html = html.replace(/<link\s+rel="canonical"\s+href="[^"]*">/i, function () {
+    return '<link rel="canonical" href="' + escapeHtml(canonical) + '">';
+  });
+
+  // Cards (server-rendered; visible without JavaScript).
+  var cards = [];
+  for (var i = 0; i < articles.length; i++) {
+    if (articles[i]) {
+      cards.push(archiveCardHtml(articles[i], siteUrl));
+    }
+  }
+  html = html.split("<!-- archive:cards -->").join(cards.join("\n            "));
+
+  html = html.replace(/(<p[^>]*id="archiveCount"[^>]*>)[\s\S]*?(<\/p>)/i, function (match, open, close) {
+    return open + (articles.length ? articles.length + " makale" : "") + close;
+  });
+  if (!articles.length) {
+    html = html.replace(/<p([^>]*id="archiveEmpty"[^>]*)>/i, function (match, attrs) {
+      return "<p" + stripAttr(attrs, "hidden") + ">";
+    });
+  }
+  if (articles.length >= 100) {
+    html = html.replace(/<p([^>]*id="archiveMore"[^>]*)>/i, function (match, attrs) {
+      return "<p" + stripAttr(attrs, "hidden") + ">";
+    });
+  }
+
+  var listItems = [];
+  for (var j = 0; j < articles.length; j++) {
+    var record = articles[j];
+    if (!record) {
+      continue;
+    }
+    listItems.push({
+      "@type": "ListItem",
+      position: listItems.length + 1,
+      url: siteUrl + "/makale/" + encodeURIComponent(get(record, "slug")) + "/",
+      name: get(record, "title") || get(record, "slug"),
+    });
+  }
+  var archiveLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Makaleler",
+    description: description,
+    url: canonical,
+    inLanguage: "tr-TR",
+    isPartOf: { "@type": "WebSite", name: firm, url: siteUrl + "/" },
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: listItems.length,
+      itemListElement: listItems,
+    },
+  };
+  html = html.replace(
+    /(<script type="application\/ld\+json" id="archiveJsonLd">)[\s\S]*?(<\/script>)/i,
+    function (match, open, close) {
+      return open + "\n" + jsonLd(archiveLd) + "\n" + close;
+    }
+  );
+
+  html = applySiteSettings(html, settings);
+  return html;
 }
 
 /* ------------------------------------------------------------------ *
@@ -599,7 +775,7 @@ function findPublishedBySlug(app, slug) {
 // shortcut: full resync on every article write; switch to single-record writes
 // when the article count grows into the hundreds.
 function syncAll(app) {
-  var summary = { generated: 0, removed: 0, skipped: false, missingMarkers: [] };
+  var summary = { generated: 0, removed: 0, skipped: false, missingMarkers: [], archiveGenerated: false, archiveSkipped: false };
 
   var template;
   try {
@@ -660,19 +836,43 @@ function syncAll(app) {
     // no generated directory yet
   }
 
-  // The bare /makale/ path is served by the static handler; keep it out of the
-  // index instead of letting it fall back to the home page.
+  // /makale/ redirects to /makaleler/ at the router level now; drop the old
+  // meta-refresh stub if a previous build wrote one.
   try {
-    writeText(
-      articleRoot() + "/index.html",
-      '<!doctype html><html lang="tr"><head><meta charset="utf-8">' +
-        "<title>Makaleler | ULUÇINAR Hukuk &amp; Danışmanlık</title>" +
-        '<meta name="robots" content="noindex, follow">' +
-        '<meta http-equiv="refresh" content="0; url=/#makaleler">' +
-        '</head><body><p><a href="/#makaleler">Makalelere dönün</a></p></body></html>'
-    );
+    $os.remove(articleRoot() + "/index.html");
   } catch (err) {
-    warn("failed to write the /makale/ stub: " + err);
+    // already gone
+  }
+
+  // Archive page: every published article, server-rendered.
+  var archiveTemplate;
+  try {
+    archiveTemplate = readText(archiveTemplatePath());
+  } catch (err) {
+    warn("archive template not found at " + archiveTemplatePath() + " - archive page not generated");
+    archiveTemplate = null;
+  }
+  if (archiveTemplate) {
+    var missingArchive = [];
+    for (var k = 0; k < ARCHIVE_MARKERS.length; k++) {
+      if (archiveTemplate.indexOf(ARCHIVE_MARKERS[k]) === -1) {
+        missingArchive.push(ARCHIVE_MARKERS[k]);
+      }
+    }
+    if (missingArchive.length) {
+      summary.archiveSkipped = true;
+      warn(
+        "archive template is missing required markers (" + missingArchive.join(", ") +
+        "); generation aborted, no archive file was written"
+      );
+    } else {
+      try {
+        writeText(archiveOutputPath(), renderArchivePage(archiveTemplate, articles, settings, siteUrl));
+        summary.archiveGenerated = true;
+      } catch (err) {
+        warn("failed to render the archive page: " + err);
+      }
+    }
   }
 
   log("sync complete: " + summary.generated + " page(s) generated, " + summary.removed + " removed");
@@ -712,6 +912,7 @@ function buildSitemap(app) {
     homeLastmod = dateOnly(new Date().toISOString());
   }
   entries.unshift({ loc: siteUrl + "/", lastmod: homeLastmod });
+  entries.splice(1, 0, { loc: siteUrl + "/makaleler/", lastmod: homeLastmod });
 
   var xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
   xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';

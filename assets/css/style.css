@@ -1906,7 +1906,7 @@ html.js.intro-done .hero__slides {
   .team-grid { grid-template-columns: repeat(2, 1fr); }
   .team-grid > :last-child { grid-column: 1 / -1; max-width: calc(50% - 13px); margin-inline: auto; }
   .article-grid { grid-template-columns: repeat(2, 1fr); }
-  .article-grid > :last-child { grid-column: 1 / -1; max-width: calc(50% - 15px); }
+  .article-grid > :last-child:nth-child(odd) { grid-column: 1 / -1; max-width: calc(50% - 15px); }
   .footer__grid { grid-template-columns: 1fr 1fr; gap: 40px; }
   .contact__grid { grid-template-columns: 1fr; gap: 52px; }
   .contact__lead { max-width: 620px; }
@@ -1941,7 +1941,7 @@ html.js.intro-done .hero__slides {
   .team-grid { grid-template-columns: 1fr; }
   .team-grid > :last-child { max-width: none; }
   .article-grid { grid-template-columns: 1fr; }
-  .article-grid > :last-child { max-width: none; }
+  .article-grid > :last-child:nth-child(odd) { max-width: none; }
 
   .section-head { margin-bottom: 40px; }
 
@@ -2531,3 +2531,104 @@ body.modal-open { overflow: hidden; }
   border-color: var(--gold-500);
   color: var(--navy-950);
 }
+
+/* Home articles: link to the full archive */
+.articles__actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 36px;
+}
+
+/* ==================================================================== *
+ * Article archive (/makaleler/)
+ * ==================================================================== */
+.archive-hero {
+  padding-block: 84px 56px;
+  color: var(--cream);
+  background:
+    radial-gradient(ellipse at 82% 8%, rgba(212, 178, 106, .22), transparent 56%),
+    linear-gradient(135deg, var(--navy-950) 0%, var(--navy-800) 62%, #221d14 100%);
+}
+.archive-hero .breadcrumb { margin-bottom: 26px; }
+.archive-hero .eyebrow { color: var(--gold-400); }
+.archive-hero__title {
+  margin-bottom: 14px;
+  color: #fbf8f1;
+  font-size: clamp(1.9rem, 4vw, 2.8rem);
+}
+.archive-hero__lead {
+  max-width: 56ch;
+  color: rgba(247, 244, 238, .72);
+  font-size: .98rem;
+  line-height: 1.8;
+}
+
+.archive { padding-top: 56px; }
+
+.archive__toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+.archive__search {
+  width: 100%;
+  max-width: 460px;
+  padding: 13px 16px;
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid rgba(27, 36, 48, .22);
+  font: inherit;
+  font-size: .92rem;
+}
+.archive__search:focus-visible {
+  outline: 2px solid var(--gold-500);
+  outline-offset: 2px;
+}
+.archive__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.archive__chip {
+  padding: 8px 14px;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid rgba(27, 36, 48, .22);
+  font: inherit;
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease, border-color .2s ease;
+}
+.archive__chip:hover { border-color: var(--gold-500); }
+.archive__chip.is-active {
+  color: var(--cream);
+  background: var(--navy-950);
+  border-color: var(--navy-950);
+}
+.archive__chip:focus-visible {
+  outline: 2px solid var(--gold-500);
+  outline-offset: 2px;
+}
+.archive__count {
+  margin-bottom: 18px;
+  color: var(--muted);
+  font-size: .8rem;
+  letter-spacing: .04em;
+}
+.archive__empty {
+  padding: 28px 0;
+  color: var(--muted);
+  font-size: .95rem;
+}
+.archive__more {
+  margin-top: 26px;
+  color: var(--muted);
+  font-size: .8rem;
+}
+
+/* `.article` sets display:flex, which would beat the hidden attribute. */
+.archive__grid .article[hidden] { display: none; }
+.archive__grid > :last-child { grid-column: auto; max-width: none; }

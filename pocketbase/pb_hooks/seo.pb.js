@@ -22,7 +22,7 @@ routerAdd("GET", "/makale.html", function (e) {
   }
 
   if (!slug) {
-    return e.redirect(301, "/#makaleler");
+    return e.redirect(301, "/makaleler/");
   }
 
   if (!seo.findPublishedBySlug(e.app, slug)) {
@@ -68,7 +68,23 @@ function seoServeArticlePage(e) {
 routerAdd("GET", "/makale/{slug}", seoServeArticlePage);
 routerAdd("GET", "/makale/{slug}/", seoServeArticlePage);
 routerAdd("GET", "/makale", function (e) {
-  return e.redirect(301, "/#makaleler");
+  return e.redirect(301, "/makaleler/");
+});
+// Exact "/makale/" only (Go ServeMux end-of-path marker) - it must not swallow
+// the article routes above.
+routerAdd("GET", "/makale/{$}", function (e) {
+  return e.redirect(301, "/makaleler/");
+});
+
+/* ------------------------------------------------------------------ *
+ * Article archive
+ * ------------------------------------------------------------------ */
+
+routerAdd("GET", "/makaleler.html", function (e) {
+  return e.redirect(301, "/makaleler/");
+});
+routerAdd("GET", "/makaleler", function (e) {
+  return e.redirect(301, "/makaleler/");
 });
 
 /* ------------------------------------------------------------------ *

@@ -26,7 +26,7 @@ window.SITE_CONFIG = {
   },
 
   /** Number of published articles shown on the home page. */
-  articlesPerPage: 3,
+  articlesPerPage: 6,
 
   /**
    * Form POST endpoint (same-origin PocketBase collection).
