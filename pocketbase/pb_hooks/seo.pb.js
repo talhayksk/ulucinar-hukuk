@@ -258,11 +258,11 @@ routerUse(function (e) {
         "object-src 'none'; " +
         "frame-src 'none'; " +
         "frame-ancestors 'none'; " +
-        "img-src 'self' data:; " +
+        "img-src 'self' data: https://plausible.io; " +
         "font-src 'self'; " +
         "style-src 'self' 'unsafe-inline'; " +
-        "script-src 'self' 'unsafe-inline'; " +
-        "connect-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' https://plausible.io; " +
+        "connect-src 'self' https://plausible.io; " +
         "form-action 'self' mailto:"
     );
   }

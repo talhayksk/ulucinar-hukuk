@@ -781,10 +781,58 @@
 
   function readCookieChoice() {
     try {
-      return window.localStorage.getItem(COOKIE_KEY);
+      var raw = window.localStorage.getItem(COOKIE_KEY);
+      if (!raw) { return ""; }
+      try {
+        var parsed = JSON.parse(raw);
+        return parsed && parsed.choice ? String(parsed.choice) : "";
+      } catch (err) {
+        return String(raw);
+      }
     } catch (err) {
-      return null;
+      return "";
     }
+  }
+
+  /* Analytics (Plausible) loads only with provider+id configured AND consent. */
+  function injectPlausible(domain) {
+    if (!domain || document.getElementById("plausibleScript")) { return; }
+    var script = document.createElement("script");
+    script.id = "plausibleScript";
+    script.defer = true;
+    script.setAttribute("data-domain", domain);
+    script.src = "https://plausible.io/js/script.js";
+    script.addEventListener("error", function () {
+      /* blocked or offline: the site keeps working */
+    });
+    document.head.appendChild(script);
+  }
+
+  function loadAnalyticsIfConsented() {
+    if (readCookieChoice() !== "accepted") { return; }
+    if (document.getElementById("plausibleScript")) { return; }
+
+    globalFetchSettings(function (settings) {
+      if (!settings) { return; }
+      if (settings.analytics_provider !== "plausible") { return; }
+      injectPlausible(String(settings.analytics_id || "").trim());
+    });
+  }
+
+  function globalFetchSettings(callback) {
+    if (!window.fetch) { return callback(null); }
+    window.fetch("/api/collections/site_settings/records?perPage=1", {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+      credentials: "same-origin"
+    })
+      .then(function (response) {
+        return response.ok ? response.json() : null;
+      })
+      .then(function (data) {
+        callback(data && data.items && data.items.length ? data.items[0] : null);
+      })
+      .catch(function () { callback(null); });
   }
 
   function storeCookieChoice(choice) {
@@ -811,7 +859,7 @@
           'Ayrıntılar için <a href="/cerez-politikasi/">Çerez Politikası</a>.</p>' +
         '<div class="cookie-banner__actions">' +
           '<button type="button" class="btn btn--gold btn--sm" data-cookie-choice="accepted">Kabul et</button>' +
-          '<button type="button" class="btn btn--ghost btn--sm" data-cookie-choice="essential">Sadece zorunlu</button>' +
+          '<button type="button" class="btn btn--ghost btn--sm" data-cookie-choice="necessary">Sadece zorunlu</button>' +
           '<button type="button" class="cookie-banner__close" data-cookie-choice="dismissed" aria-label="Çerez bilgilendirmesini kapat">' +
             '<svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>' +
           "</button>" +
@@ -823,6 +871,9 @@
     function hide(choice) {
       document.body.classList.remove("has-cookie-banner");
       storeCookieChoice(choice);
+      if (choice === "accepted") {
+        loadAnalyticsIfConsented();
+      }
       banner.classList.add("is-hidden");
       window.setTimeout(function () {
         if (banner.parentNode) { banner.parentNode.removeChild(banner); }
@@ -1093,6 +1144,7 @@
     initYear();
     initDetailsLink();
     initCookieBanner();
+    loadAnalyticsIfConsented();
     initSearch();
     startIntro();
   });

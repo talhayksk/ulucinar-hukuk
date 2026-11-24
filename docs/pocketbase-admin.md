@@ -10,7 +10,7 @@ Panel İngilizce arayüzlüdür; alan adları kodla aynıdır, açıklamalar Tü
 > Site yayın adayıdır. Tüm sayfa bölümleri, makale arşivi, detay sayfaları, hukuki sayfalar ve
 > formlar PocketBase'e bağlıdır. Kalan işler içerik/yayın girdileridir: alan adı, e-posta, çalışma
 > saatleri, istatistikler, ekip isim/bio/fotoğrafları, sosyal adresler, hukuki metinlerin
-> incelenmesi ve e-posta bildirimi (Resend/SMTP). Bunlar aşağıda ayrıca işaretlenmiştir.
+> incelenmesi ve e-posta bildirimi (Resend). Bunlar aşağıda ayrıca işaretlenmiştir.
 
 ## 1. Giriş ve hesap
 
@@ -148,6 +148,7 @@ kullanır. Kayıt sayısı 1'den fazlaysa fazlalıkları silin.
 | Ana sayfa meta açıklama | `seo_description` | Sitede aktif |
 | Canonical / OG / sitemap adresi | `site_url` | Sunucu tarafında kullanılıyor (alan adı yer tutucu) |
 | Google Maps bağlantısı | `map_url` | İletişim bölümü ve schema.org `hasMap`; iframe yok |
+| Analytics | `analytics_provider`, `analytics_id` | Yalnız çerez kabulü + sağlayıcı/id doluysa yüklenmeli |
 | Sosyal profiller | `socials`, `same_as` | Bağlantılar; gerçek adresler girilmeli |
 | Google doğrulama | `google_site_verification` | Search Console kodu (henüz doğrulanmadı) |
 
@@ -172,6 +173,8 @@ kullanır. Kayıt sayısı 1'den fazlaysa fazlalıkları silin.
 | `footer_note` | Footer yasal not |
 | `site_url` | Sitenin tam adresi, sonunda `/` olmadan: `https://www.ulucinar.av.tr` |
 | `map_url` | Google Maps bağlantısı; iletişim bölümündeki “Google Maps'te aç” ve `hasMap` |
+| `analytics_provider` | `none` veya `plausible`; varsayılan `none` |
+| `analytics_id` | Plausible `data-domain` değeri (ör. `ulucinar.av.tr`); boşsa analytics kapalı |
 | `seo_title` / `seo_description` | Ana sayfa SEO başlığı ve açıklaması |
 | `default_seo_title` / `default_seo_description` | Makale sayfaları için varsayılan SEO değerleri |
 | `og_image_url` | Varsayılan paylaşım görseli (tam URL) |
@@ -254,8 +257,8 @@ görünmez; yalnız yönetici okur ve günceller.
 - Form bir rezervasyon takvimi değildir; talep büro tarafından değerlendirilir.
 - Onay yoksa veya tarih geçmişse istek **400** döner; `status` her zaman `new` başlar.
 - Gönderimler dakikada 5 istek ile sınırlıdır.
-- **E-posta bildirimi yok:** talep yalnız panelde görünür. Resend/SMTP anahtarı yapılandırılana
-  kadar panele düzenli bakılmalıdır.
+- **E-posta bildirimi opsiyoneldir:** Resend anahtarları sunucuda tanımlıysa talep e-postası
+  gönderilir; tanımlı değilse kayıt yalnız panelde görünür. Form her durumda çalışır.
 
 ## 8. Diğer içerikler
 
@@ -285,6 +288,19 @@ görünmez; yalnız yönetici okur ve günceller.
 `ulucinar-cookie-consent` anahtarıyla saklanır. Sitede analitik/reklam çerezi yoktur; yalnız
 zorunlu/teknik çerezler ve yerel depolama kullanılır. Analitik eklenirse hem çerez politikası hem
 bildirim metni güncellenmelidir.
+
+### Analytics ve e-posta bildirimi
+
+- **Analytics:** `site_settings` içinde `analytics_provider` (`none`/`plausible`) ve `analytics_id`
+  alanları vardır. Yükleyici yalnız ziyaretçi **“Kabul et”** dediyse ve iki alan da doluysa çalışır;
+  “Sadece zorunlu” hiçbir analytics yüklemez. Şu an sağlayıcı `none`, gerçek hesap/ID yoktur ve
+  hiçbir veri gönderilmemiştir. Etkinleştirmeden önce çerez bandı/politikası metnini (“analitik
+  çerezi yoktur” ifadesi) güncelleyin ve tarayıcıda test edin.
+- **E-posta:** Form ve randevu kayıtları için opsiyonel Resend bildirimi vardır. Sunucuda
+  `RESEND_API_KEY`, `MAIL_FROM`, `MAIL_TO` (opsiyonel `RESEND_API_URL`) tanımlıysa bildirim ve
+  otomatik yanıt gönderilir; üçü de yoksa özellik sessizce kapalıdır ve form yine **200** döner.
+  Anahtarlar panele, repoya veya bu rehbere yazılmaz; `EnvironmentFile` ile root-only dosyadan
+  okunur. Gerçek gönderim anahtar sağlanınca test edilmelidir.
 
 ## 9. Yedekleme
 
@@ -322,7 +338,7 @@ deneyin.
 | Form mesajı panele düşmüyor | Sunucu ve `/api/health` çalışıyor mu kontrol edin; form gönderiminde hata varsa tarayıcı konsoluna ve sunucu loglarına bakın. |
 | Form 400 hatası | KVKK onayı işaretlenmemiş ya da `kvkk_consent` gönderilmiyor. |
 | Randevu 400 hatası | KVKK onayı yok veya `preferred_date` geçmişte. Tarihi kontrol edin. |
-| Randevu/mesaj e-postası gelmiyor | E-posta gönderimi yapılandırılmadı; kayıtlar yalnız panelde. Resend/SMTP anahtarı sunucuda tanımlanmalı. |
+| Randevu/mesaj e-postası gelmiyor | Resend anahtarları (`RESEND_API_KEY`, `MAIL_FROM`, `MAIL_TO`) sunucuda tanımlı değil; kayıtlar yalnız panelde. Anahtarlar `EnvironmentFile` ile eklenmeli. |
 | Hukuki sayfa düzenlemesi görünmüyor | `pages` kaydının `published` olduğundan ve kaydedildiğinden emin olun; taslak uyarısı metnin parçasıdır. |
 | Form 429 hatası | Dakikada 5 gönderim sınırı aşıldı; bir dakika sonra tekrar deneyin. |
 | Telefon/adres değişmedi | `site_settings` kaydını kaydedin, sayfayı yenileyin; önbelleği temizleyin. |
@@ -343,16 +359,28 @@ deneyin.
 
 ## 12. Dış yapılandırma ve yayın öncesi
 
-- **E-posta gönderimi:** Form ve randevu kayıtları şu an yalnız panelde birikir. Bildirim
-  istiyorsanız sunucuda Resend veya SMTP anahtarı tanımlanmalıdır; anahtarı panele, repoya veya
-  dokümana yazmayın.
+- **E-posta gönderimi (Resend):** Opsiyoneldir. `RESEND_API_KEY`, `MAIL_FROM`, `MAIL_TO`
+  (opsiyonel `RESEND_API_URL`) sunucudaki `EnvironmentFile` içinde tanımlanırsa iletişim ve randevu
+  bildirimleri gönderilir; eksikse özellik sessizce kapalıdır ve form **200** döner. Anahtarları
+  panele, repoya veya dokümana yazmayın; gerçek gönderimi anahtar gelince test edin.
 - **Alan adı:** `site_settings.site_url` ve statik meta etiketleri gerçek alan adıyla
   güncellenmeden yayına çıkmayın.
-- **Search Console / analitik / Google Business Profile:** yayın sonrası kurulmalı; analitik
-  eklenirse çerez politikası ve bildirimi güncellenmelidir.
+- **Search Console:** DNS TXT veya HTML doğrulama yapılabilir; `google_site_verification` alanı
+  vardır. Canlı alan adı ve kullanıcı erişimi gerekir; sitemap doğrulama sonrası gönderilir.
+- **Google Business Profile:** Dış hesaptır; NAP bilgileri siteyle birebir aynı olmalı, harita
+  bağlantısı `map_url` ile eşleşmeli. Erişim kullanıcıdan alınmalıdır.
+- **Analytics:** `analytics_provider`/`analytics_id` alanları vardır; yalnız “Kabul et” sonrası ve
+  alanlar doluysa yüklenmelidir. Şu an gerçek hesap/ID yok; çerez politikası güncellenmeden
+  etkinleştirmeyin.
+- **Diller:** Site şu an yalnız Türkçedir; `/en/` yoktur. TR/EN için çeviri ve PocketBase çok dilli
+  alanlar gerekir (sonraki faz).
+- **Harita:** iframe yoktur; `map_url` linki ve `hasMap` kullanılır. `geo` ve
+  `openingHoursSpecification` gerçek koordinat/saat girilene kadar eklenmemiştir.
 - **Hukuki metinler:** `/kvkk/`, `/cerez-politikasi/`, `/gizlilik/` taslaktır; avukat incelemesi
   tamamlanana kadar uyarıyı kaldırmayın.
-- **Admin güvenliği:** güçlü şifre, mümkünse MFA ve proxy'de IP kısıtı/VPN.
+- **Admin güvenliği:** güçlü ve benzersiz süper kullanıcı şifresi, mümkünse panelden TOTP/MFA,
+  `/_/` ve süper kullanıcı uçları için nginx IP allow-list/VPN, **Logs** takibi ve yedek/geri
+  yükleme testi. Canlı MFA doğrulanmadı.
 - **Yayın testi:** canlı alan adında `/`, `/makaleler/`, bir makale, `/calisma-alani/<slug>/`,
   `/ekip/<slug>/`, `/randevu/`, `/rss.xml`, `/sitemap.xml` ve `/_/` adreslerini kontrol edin;
   Lighthouse/Rich Results ölçümünü yayın sonrası yapın.

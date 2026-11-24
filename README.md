@@ -182,7 +182,7 @@ step-by-step guide for the client is in [`docs/pocketbase-admin.md`](docs/pocket
 
 | Collection | Purpose | Public access |
 |---|---|---|
-| `site_settings` | Firm identity, contact details, home copy, stats, values, map link, SEO defaults | list/view public |
+| `site_settings` | Firm identity, contact details, home copy, stats, values, map link, analytics switch, SEO defaults | list/view public |
 | `articles` | Articles, covers, category/tags and per-article SEO | list/view only when `status = published` |
 | `practice_areas` | Nine practice areas: card summary, detail body, icon, order | only `published = true` |
 | `team_members` | Team cards and detail pages: name, role, bio, photo, expertise, slug | only `published = true` |
@@ -210,6 +210,7 @@ step-by-step guide for the client is in [`docs/pocketbase-admin.md`](docs/pocket
 | Legal pages `/kvkk/`, `/cerez-politikasi/`, `/gizlilik/` | `pages` (`slug`, `title`, `content`, `published`) |
 | Appointment requests | `appointments` (public form; admin inbox only) |
 | Map link | `site_settings.map_url` (Google Maps link, also used as schema.org `hasMap`) |
+| Analytics | `site_settings.analytics_provider` (`none`/`plausible`), `analytics_id` |
 | Footer legal links | point to the generated legal pages above |
 | Home page title/description | `site_settings.seo_title`, `seo_description` |
 | Social profiles and schema | `site_settings.socials`, `same_as` |
@@ -224,6 +225,7 @@ superuser-only. Empty optional fields fall back to the static markup.
 | Identity | `firm_name`, `tagline`, `footer_note` |
 | Contact | `phone`, `whatsapp`, `email`, `address`, `working_hours`, `map_url` |
 | Social | `socials` (`{"instagram":"...","linkedin":"..."}`), `same_as` (JSON array for schema.org) |
+| Analytics | `analytics_provider` (`none`/`plausible`), `analytics_id` (Plausible data-domain) |
 | Home copy | `hero_note`, `hero_title`, `hero_lead`, `about_title`, `about_lead`, `about_body`, `stats`, `values` |
 | SEO | `site_url`, `seo_title`, `seo_description`, `default_seo_title`, `default_seo_description`, `og_image_url`, `google_site_verification` |
 
@@ -315,12 +317,35 @@ consent fields and `source`/`page`.
 - `kvkk_consent` is required, `consent_at` is server-side, and `status` always starts as `new`.
 - Admin statuses are `new` → `contacted` → `closed`; the collection is create-only for the public and
   has its own 5-per-60 s rate limit.
-- Appointment and contact submissions are **not e-mailed** yet. They appear only in the admin panel
-  until an e-mail provider (Resend/SMTP key) is configured.
+- E-mail notifications are optional (see below). Without the Resend environment keys, submissions
+  stay in the admin panel only.
 
 The legal pages under `/kvkk/`, `/cerez-politikasi/` and `/gizlilik/` are editable in `pages`.
 Their current text is a **draft** with a visible “TASLAK — yayın öncesi hukuki inceleme gerekir”
 warning; it must be reviewed and finalised by the client’s lawyer before launch.
+
+### E-mail notifications, analytics and languages
+
+**E-mail (optional).** Contact and appointment submissions can trigger a notification and an
+auto-reply through Resend. The feature is disabled unless **all three** of `RESEND_API_KEY`,
+`MAIL_FROM` and `MAIL_TO` are set in the PocketBase environment; `RESEND_API_URL` is optional and is
+useful for a test/mock endpoint. Missing configuration is logged and ignored — the form still
+returns `200` and the record is stored. No email has been sent in this checkout; real delivery must
+be tested once a key is supplied.
+
+The systemd example loads these values from `EnvironmentFile=-/etc/ulucinar/pocketbase.env`
+(owner-readable only). Never put keys in the repository, the admin panel or the README.
+
+**Analytics (optional, consent-based).** `site_settings.analytics_provider` accepts `none` or
+`plausible`; `analytics_id` is the Plausible `data-domain` value. With `provider = plausible` and a
+non-empty ID, the loader is injected **only after** the visitor chooses **“Kabul et”**; “Sadece
+zorunlu”, dismissing the banner, or an empty setting loads nothing. The current database has
+`provider = none` and no Plausible account/ID, so analytics is **off and not run**. The cookie
+banner/policy text currently says no analytics is used and must be updated before enabling it.
+
+**Languages.** The site is currently Turkish only (`lang="tr"`); there is no `/en/` route. A TR/EN
+version needs translated content plus multilingual fields (or separate records) in PocketBase; that
+is a later phase, not part of this release.
 
 ---
 
@@ -362,11 +387,19 @@ To change the domain: update `site_settings.site_url` in the admin panel, then t
 then run `./scripts/pocketbase-sync-public.sh` and restart/redeploy. The SEO hook rebuilds article
 pages and the sitemap from `site_url`.
 
-**Search Console.** A `google_site_verification` field exists on `site_settings`, but verification,
-sitemap submission and property access are **not done**; they require the real domain and client
-access. Lighthouse and Rich Results testing were **not run** without a live URL. After launch:
-verify the domain, submit `/sitemap.xml`, run Rich Results and monitor coverage. Do not add fake
-reviews/ratings to structured data.
+**Search Console.** A `google_site_verification` field exists on `site_settings` for the HTML-tag
+token; DNS TXT verification is also possible at the registrar. Verification, sitemap submission and
+property access are **not done**; they require the live domain and client access. After launch:
+verify the domain (DNS or HTML), submit `/sitemap.xml`, run Rich Results and monitor coverage. Do not
+add fake reviews/ratings to structured data.
+
+**Google Business Profile.** GBP is an external account, not repository configuration. Keep the
+name/address/phone identical to the site and to `map_url`/`hasMap`; verify the listing and add the
+final domain as the website. GBP access must come from the client; local SEO was **not run**.
+
+**Map.** The contact block links out to Google Maps (`site_settings.map_url`) and the home JSON-LD
+includes `hasMap`. There is no embedded iframe, and `geo`/`openingHoursSpecification` are intentionally
+absent until real coordinates and hours are supplied.
 
 ---
 
@@ -440,15 +473,23 @@ syntax checks, a static site gate and a throwaway PocketBase E2E job.
    `/_/`.
 6. The binary is not committed: install it on the server (pinned to 0.42.3) and keep it out of the
    repo. `pb_data/` and uploaded files are not committed and must be backed up separately.
+7. Put deployment-only values in `EnvironmentFile=-/etc/ulucinar/pocketbase.env` (referenced by the
+   systemd unit, readable only by the service user/root). This is where Resend keys (`RESEND_API_KEY`,
+   `MAIL_FROM`, `MAIL_TO`, optional `RESEND_API_URL`) belong; missing values simply disable e-mail.
+8. Admin access: strong unique superuser password, MFA/TOTP from the PocketBase panel where available,
+   `/_/` behind the nginx IP allow-list/VPN, review **Logs** for failed logins, and test restore from
+   a backup before launch. `deploy/nginx.conf`, `deploy/ulucinar-pocketbase.service` and
+   `deploy/backup.cron` are reference configurations, not a live deployment.
 
 ### Security hardening
 
 - **Headers.** A PocketBase middleware adds a strict `Content-Security-Policy`,
   `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options: DENY` and
   `X-Content-Type-Options: nosniff` to public responses. HSTS is sent only over TLS; TLS and HSTS
-  are terminated in the reference nginx config if TLS ends at the proxy. The CSP allows only the
-  site origin (`default-src 'self'`; fonts and images from `'self'`; `connect-src 'self'`), with
-  `'unsafe-inline'` retained for the critical inline CSS/JS in the static pages.
+  are terminated in the reference nginx config if TLS ends at the proxy. The CSP is same-origin for
+  content and fonts, with `https://plausible.io` added to `img-src`, `script-src` and `connect-src`
+  solely for the optional consent-gated analytics; `'unsafe-inline'` is retained for the critical
+  inline CSS/JS in the static pages.
 - **Rate limits.** PocketBase rate limits are enabled (authentication, create and global API), with
   dedicated 5-per-60 s buckets for contact and appointment submissions. The nginx example adds
   per-route limits and fail2ban-friendly logging; use proxy-level limits for distributed abuse.
@@ -459,11 +500,15 @@ syntax checks, a static site gate and a throwaway PocketBase E2E job.
 - **API base.** Same-origin only; there is no query-string override. Do not configure a
   cross-origin PocketBase URL for production.
 - **Admin surface.** `/_/` and `/api/` are `noindex`; keep the panel off the public internet or
-  behind the proxy allow-list. Never commit `.env`, credentials, backups or `pb_data/`.
+  behind the proxy allow-list. Use a strong unique superuser password, enable TOTP/MFA from the
+  PocketBase panel where available, review Logs for failed logins, and test backup/restore. Never
+  commit `.env`, credentials, backups or `pb_data/`.
 
 Environment variables used by the scripts (no secrets are stored in the repo):
 `PB_HTTP`, `PB_ORIGINS`, `PB_BIN`, and for the rebuild script `PB_SUPERUSER_EMAIL` /
-`PB_SUPERUSER_PASSWORD` (optional; otherwise prompted), `PB_REBUILD_PORT`.
+`PB_SUPERUSER_PASSWORD` (optional; otherwise prompted), `PB_REBUILD_PORT`. Optional e-mail
+notifications read `RESEND_API_KEY`, `MAIL_FROM`, `MAIL_TO` and `RESEND_API_URL` from the service
+environment (see the systemd `EnvironmentFile`), never from the repository.
 
 ---
 
@@ -493,11 +538,11 @@ Real and already in the site:
 
 | Service / item | Current state |
 |---|---|
-| E-mail delivery for contact and appointment requests | **Not configured.** Requests are stored in PocketBase only. Add a Resend or SMTP key in the server environment (never in the repo or admin content) when e-mail notification is required. |
-| Google Search Console | Not verified; `google_site_verification` field exists but no property/token has been set. Submit `/sitemap.xml` after the domain is live. |
-| Analytics / consent | No analytics is installed. If added, it must respect the cookie choice and the cookie policy must be updated. |
-| Google Business Profile / local SEO | Not set up; outside the repository. |
-| Admin MFA / IP restriction | Recommended: enable MFA in PocketBase if available and restrict `/_/` plus superuser endpoints in the proxy allow-list. |
+| E-mail delivery (Resend) | **Not configured / not tested.** Add `RESEND_API_KEY`, `MAIL_FROM`, `MAIL_TO` (and optional `RESEND_API_URL`) to `/etc/ulucinar/pocketbase.env`. With any missing value notifications are silently disabled and forms keep returning `200`. A real send must be tested once a key is supplied. |
+| Google Search Console | Not verified. Use DNS TXT or the `google_site_verification` HTML tag; the field exists but no token is set. Submit `/sitemap.xml` after the domain is live. |
+| Analytics (Plausible) | `analytics_provider`/`analytics_id` exist; provider is `none`. The consent-gated loader is implemented (injected only after “Kabul et” when provider/id are set; CSP allows `https://plausible.io`). **No account/ID is configured and no analytics was sent/tested.** Update the cookie banner/policy text before enabling. |
+| Google Business Profile / local SEO | External account, not set up. Keep NAP identical to the site, verify the listing and add the final domain; GBP access is required from the client. |
+| Admin security | Use a strong unique superuser password, enable TOTP/MFA in the PocketBase panel where available, keep `/_/` and superuser endpoints behind the nginx IP allow-list/VPN, review **Logs** and test backup/restore. Live MFA was **not verified**. |
 | Lighthouse / Rich Results | **Not run** without a live URL; run after deployment and before announcing the site. |
 
 Local development note: the working `pb_data` database is not part of the release and may contain
@@ -517,7 +562,7 @@ through a full QA cycle.
 | Command | Result |
 |---|---|
 | `python3 -m http.server` + `curl` for static HTML, images and fonts | `200` |
-| `node --check` for `assets/js/*.js`, `pb_hooks/*.pb.js` and `pb_hooks/lib/*.js` | passes |
+| `node --check` for `assets/js/*.js`, `pb_hooks/*.pb.js`, `pb_hooks/lib/*.js` and the analytics migration | passes |
 | `./pocketbase/pocketbase --version` | `pocketbase version 0.42.3` |
 | `./scripts/pocketbase-serve.sh` with all hooks (temporary copy) | starts; `/api/health` → `200` |
 | `GET /`, `/makaleler/`, `/kvkk/`, `/cerez-politikasi/`, `/gizlilik/`, `/randevu/` | all `200` |
@@ -538,7 +583,10 @@ through a full QA cycle.
 - Full QA/Lighthouse/Rich Results/cross-browser cycle for the new features; Lighthouse and Rich
   Results still require a live URL.
 - Search Console verification, analytics and Google Business Profile setup.
-- E-mail delivery (Resend/SMTP) and appointment notification.
+- E-mail delivery (Resend) and appointment/contact notification sends.
+- Plausible analytics: no ID/account, no browser test, no data sent.
+- Admin MFA/TOTP live verification and proxy IP allow-list.
+- TR/EN translation and `/en/` routing.
 - `pocketbase-superuser.sh` end-to-end (would create or reset a credential).
 - `pocketbase-rebuild-seo.sh`.
 - Production TLS, proxy and live backup/restore.
@@ -561,10 +609,14 @@ license.
 2. Supply real e-mail, working hours, statistics, team identities/bios/photos and social URLs.
 3. Have the drafted legal pages (`/kvkk/`, `/cerez-politikasi/`, `/gizlilik/`) reviewed and finalised;
    keep the draft warning until then.
-4. Configure e-mail delivery (Resend/SMTP key) for contact and appointment notifications, and set up
-   Search Console/analytics/Google Business Profile as needed.
-5. Upload article covers as `cover` files; external `cover_url` images are blocked by the CSP.
-6. Run Lighthouse/Rich Results on the live URL; add TR/EN translation if required.
-7. Clean local test records (`articles`, `appointments`, `contact_messages`) from `pb_data` before
+4. Configure Resend (`RESEND_API_KEY`, `MAIL_FROM`, `MAIL_TO`, optional `RESEND_API_URL`) and test one
+   real contact/appointment notification; until then forms store records only.
+5. Add a real Plausible account/ID, update the cookie banner/policy text, and verify the
+   consent-gated loader in a browser.
+6. Set up Search Console (DNS/HTML) and Google Business Profile, and enable admin MFA + proxy IP
+   allow-list in production.
+7. Upload article covers as `cover` files; external `cover_url` images are blocked by the CSP.
+8. Run Lighthouse/Rich Results on the live URL; add TR/EN translation if required.
+9. Clean local test records (`articles`, `appointments`, `contact_messages`) from `pb_data` before
    deploying a database copy.
-8. Re-check the release run (`RELEASE_GATE=true`) in CI after the final content/domain update.
+10. Re-check the release run (`RELEASE_GATE=true`) in CI after the final content/domain update.
