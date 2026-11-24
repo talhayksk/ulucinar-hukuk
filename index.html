@@ -7,6 +7,8 @@
   <title>ULUÇINAR Hukuk &amp; Danışmanlık | İzmit/Kocaeli</title>
   <meta name="description" content="ULUÇINAR Hukuk &amp; Danışmanlık: İzmit/Kocaeli merkezli; aile, ceza, ticaret, iş, gayrimenkul ve miras hukukunda gizlilik esaslı danışmanlık ve avukatlık hizmeti.">
   <link rel="canonical" href="https://www.ulucinar.av.tr/">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="alternate" type="application/rss+xml" title="ULUÇINAR Hukuk &amp; Danışmanlık — Makaleler" href="/rss.xml">
 
   <meta property="og:type" content="website">
   <meta property="og:locale" content="tr_TR">
@@ -41,7 +43,14 @@
       var off = false;
       try {
         var params = new URLSearchParams(window.location.search);
-        off = params.get('intro') === 'off' || window.location.hash === '#intro-off';
+        var forceIntro = params.get('intro') === '1';
+        var seenIntro = false;
+        try {
+          seenIntro = window.sessionStorage.getItem('ulucinar-intro-seen') === '1';
+        } catch (storageErr) { seenIntro = false; }
+        off = params.get('intro') === 'off' ||
+          window.location.hash === '#intro-off' ||
+          (seenIntro && !forceIntro);
       } catch (err) { off = false; }
       if (off) {
         html.classList.add('intro-off');
@@ -306,6 +315,9 @@
         </nav>
 
         <div class="header__actions">
+          <a class="search-toggle" href="/makaleler/" data-search-open aria-label="Sitede ara" title="Sitede ara">
+            <svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></svg>
+          </a>
           <a class="btn btn--outline btn--sm" href="/randevu/">Randevu Al</a>
           <button class="burger" type="button" id="menuToggle" aria-expanded="false" aria-controls="mobileMenu" aria-label="Menüyü aç">
             <span class="burger__line"></span>
@@ -328,6 +340,10 @@
       </div>
 
       <nav class="mobile-menu__nav" aria-label="Mobil menü">
+        <a class="mobile-menu__search" href="/makaleler/" data-search-open>
+          <svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></svg>
+          Sitede ara
+        </a>
         <a href="#anasayfa">Anasayfa</a>
         <a href="#hakkimizda">Hakkımızda</a>
         <a href="#calisma-alanlari">Çalışma Alanları</a>

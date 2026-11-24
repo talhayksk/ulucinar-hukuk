@@ -177,6 +177,49 @@
   };
 
   /**
+   * Site-wide search across published articles, practice areas and team.
+   * Resolves to { articles, practices, team, error } and never rejects.
+   */
+  PB.search = function (term) {
+    var query = String(term || "").trim();
+    if (query.length < 2) {
+      return Promise.resolve({ articles: [], practices: [], team: [], error: false });
+    }
+    var safe = escapeFilterValue(query);
+
+    function run(name, filter, sort, perPage) {
+      return request("/api/collections/" + encodeURIComponent(name) + "/records", {
+        filter: filter,
+        sort: sort,
+        perPage: String(perPage)
+      }).then(function (data) {
+        return data && Array.isArray(data.items) ? data.items : [];
+      });
+    }
+
+    return Promise.all([
+      run(collection("articles", "articles"),
+        "(status='published' && (title~'" + safe + "' || excerpt~'" + safe + "' || body~'" + safe + "'))",
+        "-published_at", 8),
+      run(collection("practiceAreas", "practice_areas"),
+        "(published=true && (title~'" + safe + "' || summary~'" + safe + "' || body~'" + safe + "'))",
+        "sort_order", 6),
+      run(collection("teamMembers", "team_members"),
+        "(published=true && (name~'" + safe + "' || role~'" + safe + "'))",
+        "sort_order", 6)
+    ]).then(function (results) {
+      return {
+        articles: results[0],
+        practices: results[1],
+        team: results[2],
+        error: PB.lastError
+      };
+    }).catch(function () {
+      return { articles: [], practices: [], team: [], error: true };
+    });
+  };
+
+  /**
    * Absolute or root-relative URL for a PocketBase file field.
    */
   PB.fileUrl = function (record, filename) {

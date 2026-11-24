@@ -1598,6 +1598,72 @@ function buildSitemap(app) {
   return xml;
 }
 
+function rssDate(value) {
+  var parts = parseDateParts(value);
+  if (!parts) {
+    return "";
+  }
+  var date = new Date(Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.time.slice(0, 2)),
+    Number(parts.time.slice(3, 5)),
+    Number(parts.time.slice(6, 8))
+  ));
+  return isNaN(date.getTime()) ? "" : date.toUTCString();
+}
+
+function buildRss(app) {
+  var settings = loadSettings(app);
+  var siteUrl = resolveSiteUrl(settings);
+  var firm = get(settings, "firm_name") || "ULUÇINAR Hukuk & Danışmanlık";
+  var channelDescription =
+    get(settings, "default_seo_description") ||
+    "ULUÇINAR Hukuk & Danışmanlık makaleleri.";
+  var articles = publishedArticles(app);
+
+  var items = [];
+  for (var i = 0; i < articles.length; i++) {
+    var record = articles[i];
+    if (!record) {
+      continue;
+    }
+    var slug = get(record, "slug");
+    if (!slug) {
+      continue;
+    }
+    var link = siteUrl + "/makale/" + encodeURIComponent(slug) + "/";
+    var description =
+      get(record, "excerpt") ||
+      clampText(plainTextFromHtml(sanitizeBody(get(record, "body"))), 300);
+    var pubDate = rssDate(get(record, "published_at") || get(record, "created"));
+
+    items.push(
+      "    <item>\n" +
+      "      <title>" + escapeXml(get(record, "title") || slug) + "</title>\n" +
+      "      <link>" + escapeXml(link) + "</link>\n" +
+      '      <guid isPermaLink="true">' + escapeXml(link) + "</guid>\n" +
+      "      <description>" + escapeXml(description) + "</description>\n" +
+      (pubDate ? "      <pubDate>" + escapeXml(pubDate) + "</pubDate>\n" : "") +
+      "    </item>"
+    );
+  }
+
+  var xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  xml += '<rss version="2.0">\n  <channel>\n';
+  xml += "    <title>" + escapeXml(firm + " — Makaleler") + "</title>\n";
+  xml += "    <link>" + escapeXml(siteUrl + "/") + "</link>\n";
+  xml += "    <description>" + escapeXml(channelDescription) + "</description>\n";
+  xml += "    <language>tr</language>\n";
+  xml += "    <lastBuildDate>" + escapeXml(new Date().toUTCString()) + "</lastBuildDate>\n";
+  if (items.length) {
+    xml += items.join("\n") + "\n";
+  }
+  xml += "  </channel>\n</rss>\n";
+  return xml;
+}
+
 function buildRobots(app) {
   var settings = loadSettings(app);
   var siteUrl = resolveSiteUrl(settings);
@@ -1637,6 +1703,7 @@ module.exports = {
   renderArticlePage: renderArticlePage,
   syncAll: syncAll,
   buildSitemap: buildSitemap,
+  buildRss: buildRss,
   buildRobots: buildRobots,
   sendNotFound: sendNotFound,
   readArticleHtml: function (slug) {

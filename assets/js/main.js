@@ -134,12 +134,23 @@
       return;
     }
 
-    if (reduceMotion.matches) {
-      markSplashReady();
-      preloader.classList.add("is-reduced");
-      window.setTimeout(function () { finishIntro(false); }, 450);
+    var forceIntro = false;
+    var seenIntro = false;
+    try {
+      var introParams = new URLSearchParams(window.location.search);
+      forceIntro = introParams.get("intro") === "1";
+      seenIntro = window.sessionStorage.getItem("ulucinar-intro-seen") === "1";
+    } catch (err) { /* storage unavailable */ }
+
+    /* One intro per browser session; reduced motion skips it entirely. */
+    if (reduceMotion.matches || (seenIntro && !forceIntro)) {
+      finishIntro(true);
       return;
     }
+
+    try {
+      window.sessionStorage.setItem("ulucinar-intro-seen", "1");
+    } catch (err) { /* ignore */ }
 
     /* Reveal and start the fill once the real badge is decoded. */
     waitForBadge(preloader);
@@ -835,6 +846,231 @@
     document.addEventListener("keydown", onKey);
   }
 
+
+  /* ------------------------------------------------------------------ *
+   * 8. Site search overlay
+   * ------------------------------------------------------------------ */
+
+  function escapeSearchHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function initSearch() {
+    var triggers = $$("[data-search-open]");
+    if (!triggers.length) { return; }
+    if (document.getElementById("searchOverlay")) { return; }
+
+    var overlay = document.createElement("div");
+    overlay.className = "search-overlay";
+    overlay.id = "searchOverlay";
+    overlay.hidden = true;
+    overlay.innerHTML =
+      '<div class="search-overlay__backdrop" data-search-close></div>' +
+      '<div class="search-overlay__panel" role="dialog" aria-modal="true" aria-labelledby="searchTitle">' +
+        '<div class="search-overlay__head">' +
+          '<h2 class="search-overlay__title" id="searchTitle">Sitede ara</h2>' +
+          '<button class="search-overlay__close" type="button" data-search-close aria-label="Aramayı kapat">' +
+            '<svg class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>' +
+          "</button>" +
+        "</div>" +
+        '<form class="search-overlay__form" role="search">' +
+          '<label class="sr-only" for="searchInput">Arama</label>' +
+          '<input id="searchInput" class="search-overlay__input" type="search" autocomplete="off" spellcheck="false" placeholder="Makale, çalışma alanı veya ekip üyesi ara">' +
+        "</form>" +
+        '<p class="search-overlay__status" id="searchStatus" role="status" aria-live="polite"></p>' +
+        '<div class="search-overlay__results" id="searchResults"></div>' +
+        '<p class="search-overlay__hint">En az 2 karakter yazın. Enter ile ilk sonuca gidebilirsiniz.</p>' +
+      "</div>";
+    document.body.appendChild(overlay);
+
+    var panel = $(".search-overlay__panel", overlay);
+    var input = $("#searchInput", overlay);
+    var status = $("#searchStatus", overlay);
+    var results = $("#searchResults", overlay);
+    var form = $(".search-overlay__form", overlay);
+    var lastTrigger = null;
+    var timer = null;
+    var sequence = 0;
+    var keyHandler = null;
+
+    function setStatus(text, isError) {
+      status.textContent = text;
+      status.classList.toggle("is-error", !!isError);
+    }
+
+    function resultItem(href, title, meta) {
+      return '<a class="search-result" href="' + href + '">' +
+        '<span class="search-result__title">' + escapeSearchHtml(title) + "</span>" +
+        (meta ? '<span class="search-result__meta">' + escapeSearchHtml(meta) + "</span>" : "") +
+      "</a>";
+    }
+
+    function group(title, items) {
+      if (!items.length) { return ""; }
+      return '<section class="search-group" aria-label="' + title + '">' +
+        '<h3 class="search-group__title">' + title + "</h3>" +
+        '<div class="search-group__list">' + items.join("") + "</div>" +
+      "</section>";
+    }
+
+    function render(data) {
+      var articles = (data.articles || []).map(function (record) {
+        return resultItem(
+          "/makale/" + encodeURIComponent(record.slug) + "/",
+          record.title || record.slug,
+          record.excerpt || record.category || "Makale"
+        );
+      });
+      var practices = (data.practices || []).map(function (record) {
+        return resultItem(
+          "/calisma-alani/" + encodeURIComponent(record.slug) + "/",
+          record.title || record.slug,
+          record.summary || "Çalışma alanı"
+        );
+      });
+      var team = (data.team || []).map(function (record) {
+        return resultItem(
+          "/ekip/" + encodeURIComponent(record.slug) + "/",
+          record.name || record.slug,
+          record.role || "Ekip üyesi"
+        );
+      });
+      var total = articles.length + practices.length + team.length;
+      if (!total) {
+        results.innerHTML = "";
+        setStatus("Sonuç bulunamadı.");
+        return;
+      }
+      results.innerHTML =
+        group("Makaleler", articles) +
+        group("Çalışma Alanları", practices) +
+        group("Ekip", team);
+      setStatus(total + " sonuç");
+    }
+
+    function runSearch(term) {
+      var current = ++sequence;
+      setStatus("Aranıyor…");
+      results.innerHTML = "";
+      if (!window.PB || typeof window.PB.search !== "function") {
+        setStatus("Arama şu anda kullanılamıyor.", true);
+        return;
+      }
+      window.PB.search(term).then(function (data) {
+        if (current !== sequence) { return; }
+        if (data.error) {
+          setStatus("Arama yapılamadı. Lütfen yeniden deneyin.", true);
+          return;
+        }
+        render(data);
+      });
+    }
+
+    function onKey(event) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        close();
+        return;
+      }
+      if (event.key !== "Tab") { return; }
+      var focusables = $$("a[href], button:not([disabled]), input", panel)
+        .filter(function (element) { return element.offsetParent !== null; });
+      if (!focusables.length) { return; }
+      var first = focusables[0];
+      var last = focusables[focusables.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    function open(trigger) {
+      var menuClose = document.getElementById("menuClose");
+      if (menuClose && document.documentElement.classList.contains("menu-open")) {
+        menuClose.click();
+      } else if (document.body.classList.contains("menu-open") && menuClose) {
+        menuClose.click();
+      }
+      lastTrigger = trigger || null;
+      overlay.hidden = false;
+      document.body.classList.add("search-open");
+      keyHandler = onKey;
+      document.addEventListener("keydown", keyHandler);
+      window.setTimeout(function () { input.focus(); }, 20);
+    }
+
+    function close() {
+      if (overlay.hidden) { return; }
+      overlay.hidden = true;
+      document.body.classList.remove("search-open");
+      if (keyHandler) {
+        document.removeEventListener("keydown", keyHandler);
+        keyHandler = null;
+      }
+      if (timer) { window.clearTimeout(timer); timer = null; }
+      sequence++;
+      input.value = "";
+      results.innerHTML = "";
+      setStatus("");
+      if (lastTrigger && typeof lastTrigger.focus === "function") { lastTrigger.focus(); }
+    }
+
+    triggers.forEach(function (trigger) {
+      trigger.addEventListener("click", function (event) {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+          return; /* no-JS style fallback: the link goes to /makaleler/ */
+        }
+        event.preventDefault();
+        open(trigger);
+      });
+    });
+
+    $$("[data-search-close]", overlay).forEach(function (element) {
+      element.addEventListener("click", close);
+    });
+
+    input.addEventListener("input", function () {
+      var term = input.value.trim();
+      if (timer) { window.clearTimeout(timer); }
+      if (term.length < 2) {
+        sequence++;
+        results.innerHTML = "";
+        setStatus(term.length ? "En az 2 karakter yazın." : "");
+        return;
+      }
+      timer = window.setTimeout(function () { runSearch(term); }, 250);
+    });
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var firstResult = results.querySelector(".search-result");
+      if (firstResult) { firstResult.click(); }
+    });
+
+    document.addEventListener("keydown", function (event) {
+      var target = event.target;
+      var tagName = (target && target.tagName ? target.tagName : "").toLowerCase();
+      var typing = tagName === "input" || tagName === "textarea" || tagName === "select" ||
+        (target && target.isContentEditable);
+      if (typing) { return; }
+
+      var isSlash = event.key === "/" && !event.metaKey && !event.ctrlKey && !event.altKey;
+      var isCmdK = (event.metaKey || event.ctrlKey) && (event.key === "k" || event.key === "K");
+      if (!isSlash && !isCmdK) { return; }
+      if (!overlay.hidden) { return; }
+      event.preventDefault();
+      open(triggers[0]);
+    });
+  }
+
   /* ------------------------------------------------------------------ *
    * Boot
    * ------------------------------------------------------------------ */
@@ -857,6 +1093,7 @@
     initYear();
     initDetailsLink();
     initCookieBanner();
+    initSearch();
     startIntro();
   });
 })();

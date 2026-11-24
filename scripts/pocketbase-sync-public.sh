@@ -44,6 +44,10 @@ if [[ -d "$ROOT_DIR/assets" ]]; then
   cp -a "$ROOT_DIR/assets" "$PUBLIC_DIR/"
 fi
 
+if [[ -f "$ROOT_DIR/site.webmanifest" ]]; then
+  cp -a "$ROOT_DIR/site.webmanifest" "$PUBLIC_DIR/"
+fi
+
 echo "Published to $PUBLIC_DIR"
 find "$PUBLIC_DIR" -maxdepth 1 -type f | sort | sed "s|$ROOT_DIR/|  |"
 if [[ -d "$PUBLIC_DIR/makale" ]]; then

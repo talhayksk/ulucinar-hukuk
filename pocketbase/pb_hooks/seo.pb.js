@@ -196,6 +196,22 @@ routerAdd("GET", "/sitemap.xml", function (e) {
   return e.blob(200, "application/xml; charset=utf-8", seo.buildSitemap(e.app));
 });
 
+routerAdd("GET", "/site.webmanifest", function (e) {
+  var raw;
+  try {
+    raw = toString($os.readFile(__hooks + "/../pb_public/site.webmanifest"));
+  } catch (err) {
+    return e.notFoundError("Manifest not found");
+  }
+  e.response.header().set("Cache-Control", "public, max-age=3600");
+  return e.blob(200, "application/manifest+json; charset=utf-8", raw);
+});
+
+routerAdd("GET", "/rss.xml", function (e) {
+  var seo = require(__hooks + "/lib/seo.js");
+  return e.blob(200, "application/rss+xml; charset=utf-8", seo.buildRss(e.app));
+});
+
 routerAdd("GET", "/robots.txt", function (e) {
   var seo = require(__hooks + "/lib/seo.js");
   return e.blob(200, "text/plain; charset=utf-8", seo.buildRobots(e.app));
