@@ -5,37 +5,44 @@ served next to a self-hosted [PocketBase](https://pocketbase.io/) instance that 
 API and the admin panel. The visual identity is navy (`#081422`) and gold (`#c9a227`), with a
 Cinzel/Manrope type pair and a logo-fill intro animation.
 
-> **Status (23 November 2026) — `v0.1.0`.** The site, CMS, server-rendered articles, SEO, security
-> layer, CI and deployment examples are complete. Remaining inputs are client content and the live
-> domain: e-mail, working hours, team identities/photos, statistics, the full KVKK notice and the
-> production URL. See [Current content and placeholders](#9-current-content-and-placeholders).
+> **Status (24 November 2026).** The site now includes the article archive, server-rendered
+> practice/team/legal pages, an appointment request flow, site search, RSS, a web manifest and a
+> cookie notice. Remaining work is external configuration and client content: domain, e-mail
+> delivery, working hours, statistics, team bios/photos, the legal review of the drafted policies,
+> Search Console/analytics, and TR/EN translation. See
+> [Current content and external configuration](#9-current-content-and-external-configuration).
 
 ---
 
 ## 1. Overview
 
-- **Public site** — one-page home (`index.html`) plus server-rendered article pages. All copy is
-  Turkish; code, comments and this README are English.
+- **Public site** — home (`index.html`), article archive (`/makaleler/`) with search and category
+  filters, server-rendered article/practice/team detail pages, three legal pages, and an appointment
+  request page. All copy is Turkish; code, comments and this README are English.
 - **Content backend** — PocketBase 0.42.3 at `/_/`. Home copy, contact details, statistics,
-  principles, practice areas, team, FAQ, articles and the contact inbox are admin-managed. There is
-  no custom admin application.
+  principles, practice areas, team, FAQ, articles, legal pages, contact messages and appointment
+  requests are admin-managed. There is no custom admin application.
 - **No build step** — plain HTML, CSS and ES5-style JavaScript. No npm, no bundler, no framework.
 - **Self-contained assets** — fonts and photographs are served from the repository; the shipped
   pages reference no third-party font or image CDN.
+- **Site utilities** — header search (opens with `/` or `Ctrl/Cmd+K`), RSS at `/rss.xml`, a web app
+  manifest, a cookie notice stored under `ulucinar-cookie-consent` in `localStorage`, and a Google
+  Maps link (no embedded iframe).
 - **Graceful degradation** — if the API is unreachable, the home page keeps its static markup and
-  the article page shows a not-found state instead of breaking.
+  the server-rendered pages remain readable.
 
 The site is served **from PocketBase itself** (`pb_public/`), so the browser talks to the API on the
 same origin. There is no query-string API override; the only supported API base is the site origin.
 
 ### Opening sequence
 
-Every full page load shows the full-screen navy splash and fills the gold logo (2600 ms) before a
-650 ms exit. The intro is not remembered across loads — reloading the page plays it again. Two
-escape hatches exist:
+The intro plays **once per browser session**: it fills the gold logo (2600 ms) and exits over 650 ms,
+then stores `ulucinar-intro-seen` in `sessionStorage`. A new tab/session or a cleared storage shows
+it again. Escape hatches:
 
-- `?intro=off` (or the `#intro-off` hash) skips the intro.
-- `prefers-reduced-motion: reduce` replaces the fill animation with a ~450 ms fade.
+- `?intro=1` forces the intro even if it was already seen.
+- `?intro=off` (or the `#intro-off` hash) skips it.
+- `prefers-reduced-motion: reduce` skips the animation.
 
 The splash critical CSS is inline, body scroll is locked while it runs, and the visible logo is
 decoded before the fill starts, so no fallback font flashes.
@@ -50,26 +57,34 @@ decoded before the fill starts, so no fallback font flashes.
 | CMS / API | PocketBase 0.42.3 (SQLite, REST, admin UI) |
 | Server-side SEO | PocketBase JS hooks: article pages, sitemap, robots, headers |
 | Typography | Cinzel + Manrope variable fonts, self-hosted (SIL OFL) |
-| Photography | Pexels, self-hosted WebP/JPEG renditions |
+| Photography | Pexels, self-hosted AVIF/WebP/JPEG renditions |
 | Hosting | Any host that can run the PocketBase binary and terminate TLS; examples in `deploy/` |
 
 ```text
 .
 ├── index.html                  # one-page home (TR), content hydrated from PocketBase
-├── makale.html                 # article page shell + server-rendered template
+├── makaleler.html              # article archive template (search + category chips)
+├── makale.html                 # article detail shell / SSR template
+├── calisma-alani.html          # practice-area detail template
+├── ekip-uyesi.html             # team member detail template
+├── randevu.html                # appointment request form
+├── sayfa.html                  # legal/information page template
+├── site.webmanifest            # PWA manifest (served as application/manifest+json)
 ├── assets/
 │   ├── css/style.css
 │   ├── js/
-│   │   ├── config.js           # SITE_CONFIG: same-origin API, collections, contact fallback
+│   │   ├── config.js           # same-origin API, collection names, endpoint fallbacks
 │   │   ├── pb.js               # minimal PocketBase REST client (fetch, no SDK)
-│   │   ├── content.js          # binds settings, stats, values, practices, team, FAQ, articles
-│   │   └── main.js             # intro, navigation, sliders, modal, form validation, a11y
+│   │   ├── content.js          # settings, home sections, articles, modals, page hydration
+│   │   ├── archive.js          # client-side filtering of server-rendered archive cards
+│   │   ├── appointment.js      # appointment form validation and POST
+│   │   └── main.js             # intro, navigation, search overlay, cookie notice, form, a11y
 │   ├── logo/                   # original PDF, gold lockups, emblem, favicon set
-│   ├── img/                    # 38 local image files; see assets/img/CREDITS.md
+│   ├── img/                    # 83 image files; see assets/img/CREDITS.md
 │   └── fonts/                  # Cinzel/Manrope variable fonts, fonts.css, OFL licences
 ├── pocketbase/
 │   ├── pocketbase              # 0.42.3 binary — NOT committed
-│   ├── pb_migrations/          # reproducible schema, content, SEO and security migrations
+│   ├── pb_migrations/          # schema, legal pages, appointments, SEO/security migrations
 │   ├── pb_hooks/               # defaults, seo, security + lib/ (renderer, sanitizer)
 │   ├── pb_public/              # generated site copy — NOT committed
 │   ├── pb_data/                # runtime database and uploads — NOT committed
@@ -80,6 +95,10 @@ decoded before the fill starts, so no fallback font flashes.
 ├── docs/pocketbase-admin.md    # Turkish admin guide for the client
 └── CHANGELOG.md                # release notes (Keep a Changelog)
 ```
+
+Generated by the SEO hook into `pb_public/` (not committed): `/makale/<slug>/`,
+`/makaleler/index.html`, `/calisma-alani/<slug>/`, `/ekip/<slug>/`, `/kvkk/`,
+`/cerez-politikasi/`, `/gizlilik/` and `/randevu/`.
 
 Not committed (see `.gitignore`): `pocketbase/pb_data/`, `pocketbase/pb_public/`,
 `pocketbase/backups/`, the PocketBase binary, `.env*`, `.team/`, `lawyer_sablon.html` and local test
@@ -117,8 +136,9 @@ chmod +x pocketbase/pocketbase
 ./scripts/pocketbase-sync-public.sh
 ```
 
-The script copies root-level `*.html` (except `lawyer_sablon.html`) and `assets/` into
-`pocketbase/pb_public/`. It never deletes generated article pages under `pb_public/makale/`.
+The script copies root-level `*.html`, `site.webmanifest` and `assets/` into `pocketbase/pb_public/`.
+It preserves generated SEO output (`makale/`, `makaleler/`, `calisma-alani/`, `ekip/`, legal pages,
+`randevu/`); the hooks rebuild that output on start and on content changes.
 
 **3. Start the server.**
 
@@ -162,13 +182,14 @@ step-by-step guide for the client is in [`docs/pocketbase-admin.md`](docs/pocket
 
 | Collection | Purpose | Public access |
 |---|---|---|
-| `site_settings` | Firm identity, contact details, home copy, stats, values, SEO defaults | list/view public |
-| `articles` | Articles, covers and per-article SEO | list/view only when `status = published` |
-| `practice_areas` | Nine practice areas: card summary, modal body, icon, order | only `published = true` |
-| `team_members` | Team cards: name, role, bio, photo, expertise, slug | only `published = true` |
+| `site_settings` | Firm identity, contact details, home copy, stats, values, map link, SEO defaults | list/view public |
+| `articles` | Articles, covers, category/tags and per-article SEO | list/view only when `status = published` |
+| `practice_areas` | Nine practice areas: card summary, detail body, icon, order | only `published = true` |
+| `team_members` | Team cards and detail pages: name, role, bio, photo, expertise, slug | only `published = true` |
 | `faq` | Accordion questions and `FAQPage` content | only `published = true` |
-| `pages` | Free HTML pages (reserved for the full KVKK notice) | only `published = true` |
+| `pages` | Legal/information pages: `kvkk`, `cerez-politikasi`, `gizlilik` | only `published = true` |
 | `contact_messages` | Contact-form inbox with consent trail | create public; read/update/delete superuser only |
+| `appointments` | Appointment requests with consent trail | create public; read/update/delete superuser only |
 
 ### What the admin controls
 
@@ -181,11 +202,15 @@ step-by-step guide for the client is in [`docs/pocketbase-admin.md`](docs/pocket
 | About heading, lead and body | `about_title`, `about_lead`, `about_body` |
 | Trust strip (four figures) | `stats` JSON array of `{value,label}` |
 | Three principle cards | `values` JSON array of `{title,text}` |
-| Practice-area cards and detail modal | `practice_areas` (`title`, `summary`, `body`, `icon`, `sort_order`) |
-| Team cards | `team_members` (`name`, `role`, `bio`, `photo`, `expertise`, `slug`) |
-| Article cards and article pages | `articles` |
+| Practice-area cards, modal and `/calisma-alani/<slug>/` pages | `practice_areas` (`title`, `summary`, `body`, `icon`, `sort_order`) |
+| Team cards and `/ekip/<slug>/` pages | `team_members` (`name`, `role`, `bio`, `photo`, `expertise`, `slug`) |
+| Article cards, archive and article pages | `articles` (`title`, `slug`, `excerpt`, `body`, `category`, `tags`, `published_at`, `status`) |
+| Article archive `/makaleler/` | generated from published `articles`; search and category chips filter the server-rendered cards |
 | FAQ accordion and `FAQPage` data | `faq` |
-| Footer KVKK link | currently the in-page summary; the full text belongs in `pages` |
+| Legal pages `/kvkk/`, `/cerez-politikasi/`, `/gizlilik/` | `pages` (`slug`, `title`, `content`, `published`) |
+| Appointment requests | `appointments` (public form; admin inbox only) |
+| Map link | `site_settings.map_url` (Google Maps link, also used as schema.org `hasMap`) |
+| Footer legal links | point to the generated legal pages above |
 | Home page title/description | `site_settings.seo_title`, `seo_description` |
 | Social profiles and schema | `site_settings.socials`, `same_as` |
 
@@ -197,7 +222,7 @@ superuser-only. Empty optional fields fall back to the static markup.
 | Group | Fields |
 |---|---|
 | Identity | `firm_name`, `tagline`, `footer_note` |
-| Contact | `phone`, `whatsapp`, `email`, `address`, `working_hours` |
+| Contact | `phone`, `whatsapp`, `email`, `address`, `working_hours`, `map_url` |
 | Social | `socials` (`{"instagram":"...","linkedin":"..."}`), `same_as` (JSON array for schema.org) |
 | Home copy | `hero_note`, `hero_title`, `hero_lead`, `about_title`, `about_lead`, `about_body`, `stats`, `values` |
 | SEO | `site_url`, `seo_title`, `seo_description`, `default_seo_title`, `default_seo_description`, `og_image_url`, `google_site_verification` |
@@ -217,7 +242,9 @@ remove them.
 | `body` | editor (HTML, 60 KB) | article body, sanitised on write and on render |
 | `cover` | file (jpeg/png/webp, 5 MB) | **recommended** cover upload |
 | `cover_url` | URL | legacy external cover; blocked by the current CSP in the browser — upload `cover` instead |
-| `published_at` | date | home-page order: `sort=-published_at` |
+| `published_at` | date | home/archive order: `sort=-published_at` |
+| `category` | text | archive category chip (e.g. `Aile Hukuku`) |
+| `tags` | JSON array | archive search terms and related keywords |
 | `status` | select `draft` / `published` | required; new records default to `draft` via hook |
 | `author` | text (120) | optional display name |
 | `seo_title` | text (120) | optional `<title>` override (aim for 50–60 chars) |
@@ -236,10 +263,12 @@ all new articles.
 1. Create the record; if `status` is left empty the hook stores it as `draft`.
 2. Fill `title`, `slug`, `excerpt`, `body`, and upload a `cover`.
 3. Set `status = published` and save.
-4. The home page shows the **three latest published** articles (`sort=-published_at`).
+4. The home page shows **up to six latest published** articles (`sort=-published_at`); the full set
+   is listed at `/makaleler/`.
 5. The server generates `pb_public/makale/<slug>/index.html` with title, canonical, body,
-   `Article`/`BreadcrumbList` JSON-LD; `/makale/<slug>/` is the public URL. `/sitemap.xml` and
-   `/robots.txt` are generated from the database.
+   `Article`/`BreadcrumbList` JSON-LD; `/makale/<slug>/` is the public URL. The archive page, practice
+   and team detail pages, legal pages, `/randevu/`, `/sitemap.xml` and `/robots.txt` are generated
+   from the same data.
 6. To retract, set `status = draft`; the record disappears from public list/view and the generated
    page is removed at the next sync. A cached page can live for up to five minutes.
 
@@ -247,9 +276,29 @@ The home-page cards and article links use the clean `/makale/<slug>/` URLs. The 
 `/makale.html?slug=...` entry point still responds with a `301` to the clean URL built from
 `site_settings.site_url`.
 
-### Contact form and KVKK
+### Public URLs
 
-The form posts to the same-origin `POST /api/collections/contact_messages/records` and stores
+| URL | Content |
+|---|---|
+| `/` | one-page home (up to six latest articles) |
+| `/makaleler/` | server-rendered archive with client-side search and category filters |
+| `/makale/<slug>/` | article detail, `Article` + `BreadcrumbList` JSON-LD |
+| `/calisma-alani/<slug>/` | practice-area detail, `Service` JSON-LD |
+| `/ekip/<slug>/` | team member detail, `Person` JSON-LD |
+| `/kvkk/`, `/cerez-politikasi/`, `/gizlilik/` | legal pages from `pages`, `WebPage` JSON-LD |
+| `/randevu/` | appointment request form |
+| `/rss.xml` | RSS 2.0 feed of published articles |
+| `/site.webmanifest` | web app manifest |
+| `/sitemap.xml`, `/robots.txt` | generated sitemap and crawler rules |
+| `/_/` | PocketBase admin (noindex, keep behind the proxy allow-list) |
+
+Legacy aliases redirect with `301`: `/makaleler.html` and `/makaleler` → `/makaleler/`,
+`/makale.html?slug=...` → `/makale/<slug>/`, `/randevu.html` → `/randevu/`, and slash-less detail
+URLs to their trailing-slash form.
+
+### Contact form, appointments and consent
+
+The contact form posts to the same-origin `POST /api/collections/contact_messages/records` and stores
 `name`, `phone`, `email`, `subject`, `message`, `kvkk_consent`, `consent_at`, `source`, `page` and
 an inbox `status`.
 
@@ -258,8 +307,20 @@ an inbox `status`.
 - `status` is always forced to `new`; clients cannot archive their own message.
 - Submissions are rate-limited (5 per 60 s) and the record is invisible to the public API.
 
-The full KVKK disclosure text is still a placeholder: the form links to the short in-page summary,
-and `pages` is empty. The notice should be added to `pages` and linked before launch.
+The appointment form at `/randevu/` posts to `POST /api/collections/appointments/records` and stores
+`name`, `phone`, optional `email`, `practice_area`, `preferred_date`, `preferred_time`, `message`,
+consent fields and `source`/`page`.
+
+- A past `preferred_date` is rejected with `400`; the form is a request, not a booking calendar.
+- `kvkk_consent` is required, `consent_at` is server-side, and `status` always starts as `new`.
+- Admin statuses are `new` → `contacted` → `closed`; the collection is create-only for the public and
+  has its own 5-per-60 s rate limit.
+- Appointment and contact submissions are **not e-mailed** yet. They appear only in the admin panel
+  until an e-mail provider (Resend/SMTP key) is configured.
+
+The legal pages under `/kvkk/`, `/cerez-politikasi/` and `/gizlilik/` are editable in `pages`.
+Their current text is a **draft** with a visible “TASLAK — yayın öncesi hukuki inceleme gerekir”
+warning; it must be reviewed and finalised by the client’s lawyer before launch.
 
 ---
 
@@ -267,16 +328,24 @@ and `pages` is empty. The notice should be added to `pages` and linked before la
 
 **Implemented**
 
-- `lang="tr"`, unique title/description, canonical and Open Graph/Twitter tags on both pages.
-- `LegalService` + `PostalAddress` JSON-LD on the home page; `FAQPage` from the FAQ section; `Image`,
-  `logo` and real NAP (phone, address, region) included.
-- Server-rendered `/makale/<slug>/` HTML with `Article` + `BreadcrumbList` JSON-LD, title, date,
-  author, cover, breadcrumb, canonical and Open Graph — no JavaScript needed.
-- Legacy `?slug=` URLs `301` to the clean URL; draft and unknown slugs return `404`.
-- `/sitemap.xml` (home + published articles, `lastmod` from the record) and `/robots.txt`
-  (disallow `/_/` and `/api/`); `X-Robots-Tag: noindex` on admin and API responses.
+- `lang="tr"`, unique title/description, canonical and Open Graph/Twitter tags on every page.
+- Home: `LegalService` + `PostalAddress` JSON-LD with real NAP, `hasMap` from
+  `site_settings.map_url`, and `FAQPage` from the FAQ section.
+- Archive `/makaleler/`: server-rendered cards, `CollectionPage` + `ItemList` JSON-LD, canonical and
+  category metadata.
+- Article `/makale/<slug>/`: server-rendered HTML with `Article` + `BreadcrumbList` JSON-LD, title,
+  date, author, cover, canonical and Open Graph — no JavaScript needed.
+- Practice `/calisma-alani/<slug>/`: `Service` JSON-LD (provider, area served, URL) + breadcrumb.
+- Team `/ekip/<slug>/`: `Person` JSON-LD (job title, works for, expertise, URL, image) + breadcrumb.
+- Legal `/kvkk/`, `/cerez-politikasi/`, `/gizlilik/`: `WebPage` + `BreadcrumbList` JSON-LD.
+- Legacy aliases `301` to the clean URLs; unknown/draft detail pages return `404`.
+- `/sitemap.xml` (21+ URLs: home, archive, appointment page, nine practice areas, three legal pages,
+  team members and published articles) and `/robots.txt` (disallow `/_/` and `/api/`);
+  `X-Robots-Tag: noindex` on admin and API responses.
+- `/rss.xml` (RSS 2.0, published articles) and `/site.webmanifest`, linked from every page head.
 - Site-wide `seo_title`/`seo_description` applied to the home page from `site_settings`.
 - Self-hosted, responsive images with `srcset`/`sizes` and a 1200×630 local Open Graph image.
+- No iframe map: the address block links out to Google Maps (`map_url`), keeping `frame-src 'none'`.
 
 **Domain.** The canonical origin is currently `https://www.ulucinar.av.tr` and is **not confirmed**.
 It appears in:
@@ -311,11 +380,13 @@ reviews/ratings to structured data.
   regeneration script in the repo, so these steps are **not verified** here.
 - Typography is self-hosted in `assets/fonts/`: Cinzel and Manrope variable fonts plus `fonts.css`
   and their OFL licences.
-- Photography is self-hosted in `assets/img/`: 38 image files — nine Pexels photographs with
-  responsive WebP/JPEG renditions (1600 px wide; the about portrait at 960×1200) plus a locally
-  composed 1200×630 `og-cover.jpg`/`.png`. The mediation article cover is a people-free composition.
-  Source URLs and licence notes are in [`assets/img/CREDITS.md`](assets/img/CREDITS.md); the Pexels
-  licence allows commercial use without attribution.
+- Photography is self-hosted in `assets/img/`: 83 image files — nine Pexels photographs with
+  responsive AVIF, WebP and JPEG renditions at 480/800/1600/2400 px (the about portrait at
+  960×1200), plus a locally composed 1200×630 `og-cover.jpg`/`.png`. Pages use `<picture>` with
+  AVIF first, WebP second and JPEG fallback. The mediation article cover is a people-free
+  composition. Source URLs and licence notes are in
+  [`assets/img/CREDITS.md`](assets/img/CREDITS.md); the Pexels licence allows commercial use without
+  attribution.
 - WhatsApp controls in the hero, contact block, footer and floating button use the official solid
   WhatsApp glyph, tinted with `currentColor` to keep contrast on navy and gold surfaces.
 - Open Graph image: `assets/img/og-cover.jpg` (1200×630), referenced absolutely from
@@ -379,8 +450,8 @@ syntax checks, a static site gate and a throwaway PocketBase E2E job.
   site origin (`default-src 'self'`; fonts and images from `'self'`; `connect-src 'self'`), with
   `'unsafe-inline'` retained for the critical inline CSS/JS in the static pages.
 - **Rate limits.** PocketBase rate limits are enabled (authentication, create and global API), with
-  a dedicated 5-per-60 s bucket for contact submissions. The nginx example adds per-route limits
-  and fail2ban-friendly logging; use proxy-level limits for distributed abuse.
+  dedicated 5-per-60 s buckets for contact and appointment submissions. The nginx example adds
+  per-route limits and fail2ban-friendly logging; use proxy-level limits for distributed abuse.
 - **Content safety.** Article HTML passes through an allow-list sanitizer on write and again on
   server render. `script`, `style`, `iframe`, `object`, `embed`, `svg`, event attributes and
   `javascript:`/`data:` URLs are removed. This is a safety net, not a trust boundary: only staff
@@ -396,15 +467,15 @@ Environment variables used by the scripts (no secrets are stored in the repo):
 
 ---
 
-## 9. Current content and placeholders
+## 9. Current content and external configuration
 
 Real and already in the site:
 
 - Phone `+90 (501) 943 63 41` (`+905019436341`), WhatsApp `https://wa.me/905019436341`.
-- Address: Karabaş Mh. Cumhuriyet Blv. No:177/2, İzmit / Kocaeli.
-- Firm name, tagline, practice-area and FAQ copy seeded in the CMS.
+- Address: Karabaş Mh. Cumhuriyet Blv. No:177/2, İzmit / Kocaeli (also used for `hasMap`).
+- Firm name, tagline, practice-area, FAQ and legal-page drafts seeded in the CMS.
 
-Still to be supplied or confirmed by the client:
+### Content still to be supplied or confirmed
 
 | Item | Where |
 |---|---|
@@ -412,46 +483,62 @@ Still to be supplied or confirmed by the client:
 | E-mail — currently `info@ulucinar.av.tr` placeholder | `site_settings.email`, static markup, `LegalService` JSON-LD |
 | Working hours — currently “Pazartesi – Cuma 09.00 – 18.30” | `site_settings.working_hours` and static fallbacks |
 | Statistics `25+`, `1.200+`, `%100` | `site_settings.stats` and the static trust strip — unverified claims; replace or remove |
-| Team identities and photos | `team_members` (`name`, `role`, `photo`); some seeded names are placeholders |
-| Full KVKK disclosure text | `pages` (empty) and the form/footer link (currently the in-page summary) |
+| Team identities, bios and photos | `team_members` (`name`, `role`, `bio`, `photo`); some seeded names are placeholders |
+| Legal review and final text of `/kvkk/`, `/cerez-politikasi/`, `/gizlilik/` | `pages` (`content`); current text carries a visible draft warning |
 | Social profiles | `site_settings.socials`, `same_as`, footer links |
-| Logo/social preview for the final domain | `assets/img/og-cover.jpg` (absolute URL updated with the domain) |
+| TR/EN translation (if required) | new content/locale work; the current site is Turkish only |
+| Social preview for the final domain | `assets/img/og-cover.jpg` (absolute URL updated with the domain) |
+
+### External configuration
+
+| Service / item | Current state |
+|---|---|
+| E-mail delivery for contact and appointment requests | **Not configured.** Requests are stored in PocketBase only. Add a Resend or SMTP key in the server environment (never in the repo or admin content) when e-mail notification is required. |
+| Google Search Console | Not verified; `google_site_verification` field exists but no property/token has been set. Submit `/sitemap.xml` after the domain is live. |
+| Analytics / consent | No analytics is installed. If added, it must respect the cookie choice and the cookie policy must be updated. |
+| Google Business Profile / local SEO | Not set up; outside the repository. |
+| Admin MFA / IP restriction | Recommended: enable MFA in PocketBase if available and restrict `/_/` plus superuser endpoints in the proxy allow-list. |
+| Lighthouse / Rich Results | **Not run** without a live URL; run after deployment and before announcing the site. |
 
 Local development note: the working `pb_data` database is not part of the release and may contain
-test records; clean the collections (especially `articles`) before deploying that database. A fresh
-installation reproduces the schema and seed content from `pb_migrations/`.
+test records; clean the collections (especially `articles` and `appointments`) before deploying that
+database. A fresh installation reproduces the schema and seed content from `pb_migrations/`.
 
 ---
 
 ## 10. Verification
 
-Checked on 23 November 2026 (Linux) against a temporary copy of the database on port 8096, so test
-messages did not touch the working database. The project QA run reported 37/37 focused checks and
-0 blockers; CI reported 12/12 static checks and 26/26 PocketBase E2E checks. Those suites were run by
-the QA/release workstream and were not re-run for this README.
+Checked on 24 November 2026 (Linux) against a temporary copy of the database on port 8098, so test
+records did not touch the working database. The earlier v0.1.0 QA run reported 37/37 focused checks
+and 0 blockers, and CI reported 12/12 static checks and 26/26 PocketBase E2E checks; the new archive,
+detail, legal, appointment, RSS and manifest features were smoke-checked for this update but not put
+through a full QA cycle.
 
 | Command | Result |
 |---|---|
-| `python3 -m http.server 8011` + `curl` for `/`, `/makale.html`, OG image, hero image, font, `fonts.css` | all `200` |
+| `python3 -m http.server` + `curl` for static HTML, images and fonts | `200` |
 | `node --check` for `assets/js/*.js`, `pb_hooks/*.pb.js` and `pb_hooks/lib/*.js` | passes |
 | `./pocketbase/pocketbase --version` | `pocketbase version 0.42.3` |
 | `./scripts/pocketbase-serve.sh` with all hooks (temporary copy) | starts; `/api/health` → `200` |
-| `GET /` | `200`; CSP, Referrer-Policy, Permissions-Policy, X-Frame-Options and nosniff present |
-| `GET /makale/aile-hukukunda-uzlasma/` | `200`; title, body and `Article` JSON-LD in the server HTML |
-| `GET /makale/yok-boyle-bir-sey/` | `404` |
-| `GET /makale.html?slug=aile-hukukunda-uzlasma` | `301` → `https://www.ulucinar.av.tr/makale/aile-hukukunda-uzlasma/` |
-| `GET /sitemap.xml`, `/robots.txt`, `/_/` | `200`; robots disallows `/_/` and `/api/`; admin sends `noindex` |
+| `GET /`, `/makaleler/`, `/kvkk/`, `/cerez-politikasi/`, `/gizlilik/`, `/randevu/` | all `200` |
+| `GET /makale/aile-hukukunda-uzlasma/`, `/calisma-alani/aile-hukuku/`, `/ekip/kurucu-ortak/` | all `200`, server-rendered |
+| `GET /rss.xml`, `/site.webmanifest` | `200` with RSS / manifest MIME types |
+| `GET /sitemap.xml`, `/robots.txt`, `/_/` | `200`; sitemap has 21 URLs; robots disallows `/_/` and `/api/`; admin sends `noindex` |
+| Security headers on `/` | CSP, Referrer-Policy, Permissions-Policy, X-Frame-Options, nosniff present |
 | Public API counts | `practice_areas 9`, `faq 5`, `team_members 3`, `site_settings 1` |
-| `site_settings` fields | phone/address/site URL present; `stats` 4 objects, `values` 3 objects; SEO fields present |
+| `site_settings` fields | phone/address/site URL/map URL present; `stats` 4 objects, `values` 3 objects; SEO fields present |
 | `POST contact_messages` without `kvkk_consent` | `400`, field error on `kvkk_consent` |
-| `POST contact_messages` with `kvkk_consent: true` | `200`; `status: new`, server `consent_at`, `source`/`page` stored |
+| `POST appointments` without `kvkk_consent` | `400` |
+| `POST appointments` with `kvkk_consent: true` | `200`; `status: new`, server `consent_at` |
 | `GET /` rendered HTML | `FAQPage` JSON-LD present |
 | `./scripts/pocketbase-backup.sh` | backup written; directory `700`, files `600`; `pb_data` tightened to `700` |
 
 **Not run in this pass**
 
-- Lighthouse, Rich Results and mobile/desktop cross-browser checks (no live URL yet).
-- Search Console verification and sitemap submission.
+- Full QA/Lighthouse/Rich Results/cross-browser cycle for the new features; Lighthouse and Rich
+  Results still require a live URL.
+- Search Console verification, analytics and Google Business Profile setup.
+- E-mail delivery (Resend/SMTP) and appointment notification.
 - `pocketbase-superuser.sh` end-to-end (would create or reset a credential).
 - `pocketbase-rebuild-seo.sh`.
 - Production TLS, proxy and live backup/restore.
@@ -471,9 +558,13 @@ license.
 ## Open items
 
 1. Confirm the domain and update `site_settings.site_url`, `config.js` and the static meta tags.
-2. Supply real e-mail, working hours, statistics, team identities/photos, social URLs and the full
-   KVKK notice.
-3. Upload article covers as `cover` files; external `cover_url` images are blocked by the CSP.
-4. Run Lighthouse/Rich Results and Search Console verification on the live domain.
-5. Clean local test records from `pb_data` before deploying a database copy.
-6. Re-check the release run (`RELEASE_GATE=true`) in CI after the final content/domain update.
+2. Supply real e-mail, working hours, statistics, team identities/bios/photos and social URLs.
+3. Have the drafted legal pages (`/kvkk/`, `/cerez-politikasi/`, `/gizlilik/`) reviewed and finalised;
+   keep the draft warning until then.
+4. Configure e-mail delivery (Resend/SMTP key) for contact and appointment notifications, and set up
+   Search Console/analytics/Google Business Profile as needed.
+5. Upload article covers as `cover` files; external `cover_url` images are blocked by the CSP.
+6. Run Lighthouse/Rich Results on the live URL; add TR/EN translation if required.
+7. Clean local test records (`articles`, `appointments`, `contact_messages`) from `pb_data` before
+   deploying a database copy.
+8. Re-check the release run (`RELEASE_GATE=true`) in CI after the final content/domain update.

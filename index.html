@@ -32,7 +32,7 @@
   <link rel="preload" href="assets/fonts/Cinzel-Variable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/fonts/fonts.css">
   <link rel="stylesheet" href="assets/css/style.css?v=20261123c">
-  <link rel="preload" as="image" type="image/webp" fetchpriority="high" imagesrcset="assets/img/hero-library-bw-480.webp 480w, assets/img/hero-library-bw-800.webp 800w, assets/img/hero-library-bw-1600.webp 1600w" imagesizes="100vw">
+  <link rel="preload" as="image" type="image/avif" fetchpriority="high" imagesrcset="assets/img/hero-library-bw-480.avif 480w, assets/img/hero-library-bw-800.avif 800w, assets/img/hero-library-bw-1600.avif 1600w, assets/img/hero-library-bw-2400.avif 2400w" imagesizes="100vw">
 
   <script>
     /* Critical bootstrap: no FOUC, skip switch, failsafe. */
@@ -379,27 +379,31 @@
         <div class="hero__slides" aria-hidden="true">
           <figure class="hero__slide is-active">
             <picture>
-                 <source type="image/webp" srcset="assets/img/hero-library-bw-480.webp 480w, assets/img/hero-library-bw-800.webp 800w, assets/img/hero-library-bw-1600.webp 1600w" sizes="100vw">
-                 <img src="assets/img/hero-library-bw-1600.jpg" alt="" width="1600" height="1067" loading="eager" fetchpriority="high" decoding="async">
-                 </picture>
+              <source type="image/avif" srcset="assets/img/hero-library-bw-480.avif 480w, assets/img/hero-library-bw-800.avif 800w, assets/img/hero-library-bw-1600.avif 1600w, assets/img/hero-library-bw-2400.avif 2400w" sizes="100vw">
+              <source type="image/webp" srcset="assets/img/hero-library-bw-480.webp 480w, assets/img/hero-library-bw-800.webp 800w, assets/img/hero-library-bw-1600.webp 1600w, assets/img/hero-library-bw-2400.webp 2400w" sizes="100vw">
+              <img src="assets/img/hero-library-bw-1600.jpg" alt="" width="1600" height="1067" loading="eager" fetchpriority="high" decoding="async">
+            </picture>
           </figure>
           <figure class="hero__slide">
             <picture>
-                 <source type="image/webp" srcset="assets/img/hero-library-shelves-480.webp 480w, assets/img/hero-library-shelves-800.webp 800w, assets/img/hero-library-shelves-1600.webp 1600w" sizes="100vw">
-                 <img src="assets/img/hero-library-shelves-1600.jpg" alt="" width="1600" height="1067" loading="eager" decoding="async">
-                 </picture>
+              <source type="image/avif" srcset="assets/img/hero-library-shelves-480.avif 480w, assets/img/hero-library-shelves-800.avif 800w, assets/img/hero-library-shelves-1600.avif 1600w, assets/img/hero-library-shelves-2400.avif 2400w" sizes="100vw">
+              <source type="image/webp" srcset="assets/img/hero-library-shelves-480.webp 480w, assets/img/hero-library-shelves-800.webp 800w, assets/img/hero-library-shelves-1600.webp 1600w, assets/img/hero-library-shelves-2400.webp 2400w" sizes="100vw">
+              <img src="assets/img/hero-library-shelves-1600.jpg" alt="" width="1600" height="1067" loading="eager" decoding="async">
+            </picture>
           </figure>
           <figure class="hero__slide">
             <picture>
-                 <source type="image/webp" srcset="assets/img/hero-notebook-480.webp 480w, assets/img/hero-notebook-800.webp 800w, assets/img/hero-notebook-1600.webp 1600w" sizes="100vw">
-                 <img src="assets/img/hero-notebook-1600.jpg" alt="" width="1600" height="1067" loading="eager" decoding="async">
-                 </picture>
+              <source type="image/avif" srcset="assets/img/hero-notebook-480.avif 480w, assets/img/hero-notebook-800.avif 800w, assets/img/hero-notebook-1600.avif 1600w, assets/img/hero-notebook-2400.avif 2400w" sizes="100vw">
+              <source type="image/webp" srcset="assets/img/hero-notebook-480.webp 480w, assets/img/hero-notebook-800.webp 800w, assets/img/hero-notebook-1600.webp 1600w, assets/img/hero-notebook-2400.webp 2400w" sizes="100vw">
+              <img src="assets/img/hero-notebook-1600.jpg" alt="" width="1600" height="1067" loading="eager" decoding="async">
+            </picture>
           </figure>
           <figure class="hero__slide">
             <picture>
-                 <source type="image/webp" srcset="assets/img/hero-courthouse-480.webp 480w, assets/img/hero-courthouse-800.webp 800w, assets/img/hero-courthouse-1600.webp 1600w" sizes="100vw">
-                 <img src="assets/img/hero-courthouse-1600.jpg" alt="" width="1600" height="1067" loading="eager" decoding="async">
-                 </picture>
+              <source type="image/avif" srcset="assets/img/hero-courthouse-480.avif 480w, assets/img/hero-courthouse-800.avif 800w, assets/img/hero-courthouse-1600.avif 1600w, assets/img/hero-courthouse-2400.avif 2400w" sizes="100vw">
+              <source type="image/webp" srcset="assets/img/hero-courthouse-480.webp 480w, assets/img/hero-courthouse-800.webp 800w, assets/img/hero-courthouse-1600.webp 1600w, assets/img/hero-courthouse-2400.webp 2400w" sizes="100vw">
+              <img src="assets/img/hero-courthouse-1600.jpg" alt="" width="1600" height="1067" loading="eager" decoding="async">
+            </picture>
           </figure>
         </div>
         <div class="hero__veil" aria-hidden="true"></div>
@@ -466,17 +470,19 @@
             <div class="about__frame">
               <div class="media media--portrait">
                 <picture>
-                 <source type="image/webp" srcset="assets/img/about-library-480.webp 480w, assets/img/about-library-720.webp 720w, assets/img/about-library-960.webp 960w" sizes="(max-width: 900px) 100vw, 42vw">
-                 <img src="assets/img/about-library-960.jpg" alt="Kemerli tavanı ve ahşap raflarıyla tarihi hukuk kütüphanesi" width="960" height="1200" loading="lazy" decoding="async">
-                 </picture>
+                  <source type="image/avif" srcset="assets/img/about-library-480.avif 480w, assets/img/about-library-720.avif 720w, assets/img/about-library-960.avif 960w, assets/img/about-library-1200.avif 1200w" sizes="(max-width: 900px) 100vw, 42vw">
+                  <source type="image/webp" srcset="assets/img/about-library-480.webp 480w, assets/img/about-library-720.webp 720w, assets/img/about-library-960.webp 960w, assets/img/about-library-1200.webp 1200w" sizes="(max-width: 900px) 100vw, 42vw">
+                  <img src="assets/img/about-library-960.jpg" alt="Kemerli tavanı ve ahşap raflarıyla tarihi hukuk kütüphanesi" width="960" height="1200" loading="lazy" decoding="async">
+                </picture>
               </div>
             </div>
             <div class="about__inset">
               <div class="media media--square">
                 <picture>
-                 <source type="image/webp" srcset="assets/img/inset-bookcase-480.webp 480w, assets/img/inset-bookcase-800.webp 800w, assets/img/inset-bookcase-1600.webp 1600w" sizes="(max-width: 900px) 40vw, 20vw">
-                 <img src="assets/img/inset-bookcase-1600.jpg" alt="Ahşap hukuk kitaplığı" width="1600" height="1068" loading="lazy" decoding="async">
-                 </picture>
+                  <source type="image/avif" srcset="assets/img/inset-bookcase-480.avif 480w, assets/img/inset-bookcase-800.avif 800w, assets/img/inset-bookcase-1600.avif 1600w, assets/img/inset-bookcase-2400.avif 2400w" sizes="(max-width: 900px) 40vw, 20vw">
+                  <source type="image/webp" srcset="assets/img/inset-bookcase-480.webp 480w, assets/img/inset-bookcase-800.webp 800w, assets/img/inset-bookcase-1600.webp 1600w, assets/img/inset-bookcase-2400.webp 2400w" sizes="(max-width: 900px) 40vw, 20vw">
+                  <img src="assets/img/inset-bookcase-1600.jpg" alt="Ahşap hukuk kitaplığı" width="1600" height="1068" loading="lazy" decoding="async">
+                </picture>
               </div>
             </div>
             <p class="about__caption">İzmit · Kocaeli</p>
@@ -715,9 +721,10 @@
             <article class="article" data-pb-collection="articles" data-pb-id="aile-hukukunda-uzlasma" data-fallback-article data-reveal>
               <a class="article__media media" href="/makale/aile-hukukunda-uzlasma/" aria-hidden="true" tabindex="-1">
                 <picture>
-                 <source type="image/webp" srcset="assets/img/article-mediation-v2-480.webp 480w, assets/img/article-mediation-v2-800.webp 800w, assets/img/article-mediation-v2-1600.webp 1600w" sizes="(max-width: 700px) 100vw, 33vw">
-                 <img src="assets/img/article-mediation-v2-1600.jpg" alt="" width="1600" height="1000" loading="lazy" decoding="async">
-                 </picture>
+                  <source type="image/avif" srcset="assets/img/article-mediation-v2-480.avif 480w, assets/img/article-mediation-v2-800.avif 800w, assets/img/article-mediation-v2-1600.avif 1600w, assets/img/article-mediation-v2-2400.avif 2400w" sizes="(max-width: 700px) 100vw, 33vw">
+                  <source type="image/webp" srcset="assets/img/article-mediation-v2-480.webp 480w, assets/img/article-mediation-v2-800.webp 800w, assets/img/article-mediation-v2-1600.webp 1600w, assets/img/article-mediation-v2-2400.webp 2400w" sizes="(max-width: 700px) 100vw, 33vw">
+                  <img src="assets/img/article-mediation-v2-1600.jpg" alt="" width="1600" height="1000" loading="lazy" decoding="async">
+                </picture>
               </a>
               <div class="article__body">
                 <p class="article__meta"><time datetime="2026-10-12">12 Ekim 2026</time> · Aile Hukuku</p>
@@ -730,9 +737,10 @@
             <article class="article" data-pb-collection="articles" data-pb-id="is-hukukunda-ise-iade" data-fallback-article data-reveal>
               <a class="article__media media" href="/makale/is-hukukunda-ise-iade/" aria-hidden="true" tabindex="-1">
                 <picture>
-                 <source type="image/webp" srcset="assets/img/article-employment-480.webp 480w, assets/img/article-employment-800.webp 800w, assets/img/article-employment-1600.webp 1600w" sizes="(max-width: 700px) 100vw, 33vw">
-                 <img src="assets/img/article-employment-1600.jpg" alt="" width="1600" height="1000" loading="lazy" decoding="async">
-                 </picture>
+                  <source type="image/avif" srcset="assets/img/article-employment-480.avif 480w, assets/img/article-employment-800.avif 800w, assets/img/article-employment-1600.avif 1600w, assets/img/article-employment-2400.avif 2400w" sizes="(max-width: 700px) 100vw, 33vw">
+                  <source type="image/webp" srcset="assets/img/article-employment-480.webp 480w, assets/img/article-employment-800.webp 800w, assets/img/article-employment-1600.webp 1600w, assets/img/article-employment-2400.webp 2400w" sizes="(max-width: 700px) 100vw, 33vw">
+                  <img src="assets/img/article-employment-1600.jpg" alt="" width="1600" height="1000" loading="lazy" decoding="async">
+                </picture>
               </a>
               <div class="article__body">
                 <p class="article__meta"><time datetime="2026-09-28">28 Eylül 2026</time> · İş Hukuku</p>
@@ -745,9 +753,10 @@
             <article class="article" data-pb-collection="articles" data-pb-id="gayrimenkulde-tapu-guvenligi" data-fallback-article data-reveal>
               <a class="article__media media" href="/makale/gayrimenkulde-tapu-guvenligi/" aria-hidden="true" tabindex="-1">
                 <picture>
-                 <source type="image/webp" srcset="assets/img/article-property-480.webp 480w, assets/img/article-property-800.webp 800w, assets/img/article-property-1600.webp 1600w" sizes="(max-width: 700px) 100vw, 33vw">
-                 <img src="assets/img/article-property-1600.jpg" alt="" width="1600" height="1000" loading="lazy" decoding="async">
-                 </picture>
+                  <source type="image/avif" srcset="assets/img/article-property-480.avif 480w, assets/img/article-property-800.avif 800w, assets/img/article-property-1600.avif 1600w, assets/img/article-property-2400.avif 2400w" sizes="(max-width: 700px) 100vw, 33vw">
+                  <source type="image/webp" srcset="assets/img/article-property-480.webp 480w, assets/img/article-property-800.webp 800w, assets/img/article-property-1600.webp 1600w, assets/img/article-property-2400.webp 2400w" sizes="(max-width: 700px) 100vw, 33vw">
+                  <img src="assets/img/article-property-1600.jpg" alt="" width="1600" height="1000" loading="lazy" decoding="async">
+                </picture>
               </a>
               <div class="article__body">
                 <p class="article__meta"><time datetime="2026-09-14">14 Eylül 2026</time> · Gayrimenkul Hukuku</p>

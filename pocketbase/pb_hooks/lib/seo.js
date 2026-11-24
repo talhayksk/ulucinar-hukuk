@@ -339,6 +339,69 @@ function articleCoverPath(record) {
   return get(record, "cover_url");
 }
 
+// Responsive <picture> for the local Pexels set (/assets/img/<base>-1600.jpg).
+// Returns "" for PB file URLs or external covers, so callers keep their <img>.
+var LOCAL_IMAGE_RE = /^\/assets\/img\/([a-z0-9-]+?)-(480|720|960|1200|1600)\.jpg$/i;
+
+function localImageBase(path) {
+  var match = String(path || "").match(LOCAL_IMAGE_RE);
+  return match ? match[1] : "";
+}
+
+function localFileExists(path) {
+  try {
+    $os.stat(path);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+function localPicture(path, options) {
+  var base = localImageBase(path);
+  if (!base) {
+    return "";
+  }
+  var opts = options || {};
+  var widths = base === "about-library" ? [480, 720, 960, 1200] : [480, 800, 1600, 2400];
+
+  function buildSrcset(ext) {
+    var parts = [];
+    for (var i = 0; i < widths.length; i++) {
+      var file = "/assets/img/" + base + "-" + widths[i] + "." + ext;
+      if (localFileExists(publicDir() + file)) {
+        parts.push(file + " " + widths[i] + "w");
+      }
+    }
+    return parts.join(", ");
+  }
+
+  var avif = buildSrcset("avif");
+  var webp = buildSrcset("webp");
+  if (!avif && !webp) {
+    return "";
+  }
+
+  var sizes = opts.sizes || "100vw";
+  var img = "<img" +
+    (opts.id ? ' id="' + opts.id + '"' : "") +
+    ' src="' + escapeHtml(path) + '" alt="' + escapeHtml(opts.alt || "") + '"' +
+    (opts.width ? ' width="' + opts.width + '"' : "") +
+    (opts.height ? ' height="' + opts.height + '"' : "") +
+    (opts.loading ? ' loading="' + opts.loading + '"' : "") +
+    (opts.fetchpriority ? ' fetchpriority="' + opts.fetchpriority + '"' : "") +
+    ' decoding="async">';
+
+  var html = "<picture>";
+  if (avif) {
+    html += '<source type="image/avif" srcset="' + avif + '" sizes="' + sizes + '">';
+  }
+  if (webp) {
+    html += '<source type="image/webp" srcset="' + webp + '" sizes="' + sizes + '">';
+  }
+  return html + img + "</picture>";
+}
+
 function absolutize(url, siteUrl) {
   if (url && url.indexOf("/") === 0) {
     return siteUrl + url;
@@ -645,11 +708,21 @@ function renderArticlePage(template, record, settings, siteUrl) {
 
   html = html.replace(/<img([^>]*\bid="articleCover"[^>]*)>/i, function () {
     if (!cover) {
-      return '<img id="articleCover" alt="" width="1600" height="900" decoding="async">';
+      return '<img id="articleCover" alt="" width="1600" height="1000" decoding="async">';
+    }
+    var coverPicture = localPicture(cover, {
+      id: "articleCover",
+      alt: title,
+      width: 1600,
+      height: 1000,
+      fetchpriority: "high",
+    });
+    if (coverPicture) {
+      return coverPicture;
     }
     return (
       '<img id="articleCover" src="' + escapeHtml(cover) + '" alt="' + escapeHtml(title) +
-      '" width="1600" height="900" fetchpriority="high" decoding="async">'
+      '" width="1600" height="1000" fetchpriority="high" decoding="async">'
     );
   });
 
@@ -720,7 +793,14 @@ function archiveCardHtml(record, siteUrl) {
   var search = [title, excerpt, category, tags.join(" ")].join(" ").toLowerCase();
 
   var media = cover
-    ? '<img src="' + escapeHtml(cover) + '" alt="" width="800" height="500" loading="lazy" decoding="async">'
+    ? (localPicture(cover, {
+        alt: "",
+        width: 800,
+        height: 500,
+        loading: "lazy",
+        sizes: "(max-width: 700px) 100vw, 33vw",
+      }) ||
+      '<img src="' + escapeHtml(cover) + '" alt="" width="800" height="500" loading="lazy" decoding="async">')
     : '<span class="article__placeholder" aria-hidden="true"></span>';
 
   var meta = "";

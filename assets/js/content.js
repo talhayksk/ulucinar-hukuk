@@ -230,6 +230,21 @@
     '</article>';
   }
 
+  /* AVIF/WebP <picture> for the local image sets; "" for PB files/external. */
+  function localCoverPicture(src) {
+    var match = String(src || "").match(/^\/assets\/img\/([a-z0-9-]+?)-(?:480|720|960|1200|1600)\.jpg$/i);
+    if (!match) { return ""; }
+    var base = match[1];
+    var widths = [480, 800, 1600, 2400];
+    var avif = widths.map(function (w) { return "/assets/img/" + base + "-" + w + ".avif " + w + "w"; }).join(", ");
+    var webp = widths.map(function (w) { return "/assets/img/" + base + "-" + w + ".webp " + w + "w"; }).join(", ");
+    return '<picture>' +
+      '<source type="image/avif" srcset="' + avif + '" sizes="(max-width: 700px) 100vw, 33vw">' +
+      '<source type="image/webp" srcset="' + webp + '" sizes="(max-width: 700px) 100vw, 33vw">' +
+      '<img src="' + escapeHtml(src) + '" alt="" width="800" height="500" loading="lazy" decoding="async">' +
+    "</picture>";
+  }
+
   function buildArticleCard(record) {
     var href = articleHref(record);
     var title = record.title || "Başlıksız makale";
@@ -241,7 +256,8 @@
     var category = articleCategory(record);
 
     var media = cover
-      ? '<img src="' + escapeHtml(cover) + '" alt="" width="800" height="500" loading="lazy" decoding="async" onerror="this.style.opacity=\'0\'">'
+      ? (localCoverPicture(cover) ||
+        '<img src="' + escapeHtml(cover) + '" alt="" width="800" height="500" loading="lazy" decoding="async" onerror="this.style.opacity=\'0\'">')
       : '<span class="article__placeholder" aria-hidden="true"></span>';
 
     var meta = displayDate

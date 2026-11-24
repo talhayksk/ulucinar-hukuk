@@ -3170,3 +3170,11 @@ body.search-open { overflow: hidden; }
   }
   .search-overlay__results { flex: 1; max-height: none; }
 }
+
+/* Responsive AVIF/WebP picture wrappers (local image sets) */
+.article__media picture,
+.article-hero__media picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

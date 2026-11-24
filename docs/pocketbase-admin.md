@@ -7,9 +7,10 @@ Panel İngilizce arayüzlüdür; alan adları kodla aynıdır, açıklamalar Tü
 - Yayındaki adres: `https://<alan-adiniz>/_/` (yayına geçince)
 - Sürüm: PocketBase 0.42.3
 
-> Site yayın adayıdır (v0.1.0). Tüm sayfa bölümleri ve form PocketBase'e bağlıdır. Kalan işler
-> içerik ve yayın girdileridir: alan adı, e-posta, çalışma saatleri, istatistikler, ekip
-> isim/fotoğrafları, sosyal adresler ve tam KVKK metni. Bunlar aşağıda ayrıca işaretlenmiştir.
+> Site yayın adayıdır. Tüm sayfa bölümleri, makale arşivi, detay sayfaları, hukuki sayfalar ve
+> formlar PocketBase'e bağlıdır. Kalan işler içerik/yayın girdileridir: alan adı, e-posta, çalışma
+> saatleri, istatistikler, ekip isim/bio/fotoğrafları, sosyal adresler, hukuki metinlerin
+> incelenmesi ve e-posta bildirimi (Resend/SMTP). Bunlar aşağıda ayrıca işaretlenmiştir.
 
 ## 1. Giriş ve hesap
 
@@ -50,7 +51,9 @@ satıra tıklayınca düzenleme formu açılır.
 | `body` | Hayır | Makalenin HTML gövdesi (başlık, paragraf, liste, alıntı) |
 | `cover` | Hayır | Kapak görseli dosyası (JPEG/PNG/WebP, en fazla 5 MB; tek dosya). **Önerilen yöntem.** |
 | `cover_url` | Hayır | Harici kapak adresi. Mevcut güvenlik politikası (CSP) harici görselleri engellediği için sitede görünmez; kullanmayın. |
-| `published_at` | Hayır | Yayın tarihi. Ana sayfa sıralaması bu alana göre **yeniden eskiye** yapılır. |
+| `published_at` | Hayır | Yayın tarihi. Ana sayfa ve arşiv sıralaması bu alana göre **yeniden eskiye** yapılır. |
+| `category` | Hayır | Arşivdeki kategori filtresi; ör. `Aile Hukuku`. |
+| `tags` | Hayır | Arşiv aramasında kullanılan JSON etiket dizisi; ör. `["arabuluculuk","aile"]`. |
 | `status` | Evet | `draft` (taslak) veya `published` (yayında) |
 | `author` | Hayır | Görünen yazar adı |
 | `seo_title` | Hayır | Arama sonuçlarında görünecek başlık (50–60 karakter önerilir) |
@@ -92,8 +95,9 @@ makalelerden otomatik üretilir.
 1. Makaleyi kaydedin (taslak olarak kalabilir).
 2. Önizleme: `status = published` yapmadan önce gövdeyi ve kapağı kontrol edin.
 3. `status` alanını **published** yapıp kaydedin.
-4. Ana sayfadaki “Makaleler” bölümü en yeni **3 yayınlanmış** makaleyi gösterir. Daha eski
-   makaleler silinmez, yalnızca ana sayfa listesinde görünmez.
+4. Ana sayfadaki “Makaleler” bölümü en yeni **6 yayınlanmış** makaleyi gösterir; tüm arşiv
+   `/makaleler/` adresinde arama ve kategori filtreleriyle listelenir. Daha eski makaleler
+   silinmez.
 5. Sunucu, makale sayfasını `/makale/<slug>/` adresinde üretir; sitemap ve robots otomatik
    güncellenir.
 6. Yayından kaldırmak için `status = draft` yapıp kaydedin. Kayıt silinmez, siteden kalkar;
@@ -117,8 +121,9 @@ Yayın kontrol listesi:
 **Collections → site_settings**
 
 Gerçek iletişim bilgileri: telefon `+90 (501) 943 63 41`, WhatsApp `https://wa.me/905019436341`,
-adres `Karabaş Mh. Cumhuriyet Blv. No:177/2, İzmit / KOCAELİ`. E-posta, çalışma saatleri,
-istatistikler, ekip isim/fotoğrafları ve KVKK metni henüz yer tutucudur; yayın öncesi güncellenmeli.
+adres `Karabaş Mh. Cumhuriyet Blv. No:177/2, İzmit / KOCAELİ`, harita bağlantısı `map_url`.
+E-posta, çalışma saatleri, istatistikler ve ekip isim/fotoğrafları henüz yer tutucudur; hukuki
+sayfalar ise taslaktır ve avukat incelemesi bekler.
 
 Bu koleksiyonda **tek kayıt** olmalıdır. Yanlışlıkla ikinci kayıt oluşturmayın; site ilk kaydı
 kullanır. Kayıt sayısı 1'den fazlaysa fazlalıkları silin.
@@ -142,6 +147,7 @@ kullanır. Kayıt sayısı 1'den fazlaysa fazlalıkları silin.
 | Ana sayfa `<title>` | `seo_title` | Sitede aktif |
 | Ana sayfa meta açıklama | `seo_description` | Sitede aktif |
 | Canonical / OG / sitemap adresi | `site_url` | Sunucu tarafında kullanılıyor (alan adı yer tutucu) |
+| Google Maps bağlantısı | `map_url` | İletişim bölümü ve schema.org `hasMap`; iframe yok |
 | Sosyal profiller | `socials`, `same_as` | Bağlantılar; gerçek adresler girilmeli |
 | Google doğrulama | `google_site_verification` | Search Console kodu (henüz doğrulanmadı) |
 
@@ -165,6 +171,7 @@ kullanır. Kayıt sayısı 1'den fazlaysa fazlalıkları silin.
 | `values` | JSON dizi: `[{"title":"Mesleki Sır","text":"..."}]` |
 | `footer_note` | Footer yasal not |
 | `site_url` | Sitenin tam adresi, sonunda `/` olmadan: `https://www.ulucinar.av.tr` |
+| `map_url` | Google Maps bağlantısı; iletişim bölümündeki “Google Maps'te aç” ve `hasMap` |
 | `seo_title` / `seo_description` | Ana sayfa SEO başlığı ve açıklaması |
 | `default_seo_title` / `default_seo_description` | Makale sayfaları için varsayılan SEO değerleri |
 | `og_image_url` | Varsayılan paylaşım görseli (tam URL) |
@@ -222,20 +229,62 @@ Form, aynı origin'deki `/api/collections/contact_messages/records` adresine yaz
 `kvkk_consent: true` olarak gönderir. Gönderim başarılıysa kayıt panelde görünür; hata olursa
 ziyaretçiye mesaj gösterilir. Eski `kvkk` alanı onay yerine **geçmez**.
 
-Tam KVKK aydınlatma metni henüz yayınlanmamıştır; formdaki bağlantı sayfa içindeki kısa nota
-gider. Metin `pages` koleksiyonuna eklendiğinde bağlantı oraya yönlendirilmelidir.
+Tam KVKK aydınlatma metni taslaktır; `/kvkk/` sayfası panelden düzenlenir ve üzerinde hukuki
+inceleme uyarısı taşır. Metin avukat tarafından kesinleştirilene kadar uyarı kaldırılmamalıdır.
+
+### Randevu talepleri (`appointments`)
+
+**Collections → appointments**
+
+`/randevu/` formundan gelen ön görüşme talepleri burada toplanır. Kayıtlar public API'de
+görünmez; yalnız yönetici okur ve günceller.
+
+| Alan | Not |
+|---|---|
+| `name`, `phone` | Zorunlu |
+| `email` | Opsiyonel |
+| `practice_area` | Seçilen çalışma alanı |
+| `preferred_date` | Opsiyonel; geçmiş tarih sunucuda reddedilir |
+| `preferred_time` | `09:00–12:00`, `13:00–18:30` veya `Fark etmez` |
+| `message` | Serbest metin |
+| `kvkk_consent`, `consent_at` | Onay zorunlu; `consent_at` sunucu tarafından yazılır |
+| `status` | `new` → `contacted` → `closed` |
+| `source`, `page` | Form kaynağı ve sayfa yolu |
+
+- Form bir rezervasyon takvimi değildir; talep büro tarafından değerlendirilir.
+- Onay yoksa veya tarih geçmişse istek **400** döner; `status` her zaman `new` başlar.
+- Gönderimler dakikada 5 istek ile sınırlıdır.
+- **E-posta bildirimi yok:** talep yalnız panelde görünür. Resend/SMTP anahtarı yapılandırılana
+  kadar panele düzenli bakılmalıdır.
 
 ## 8. Diğer içerikler
 
 | Koleksiyon | Kullanım | Not |
 |---|---|---|
-| `practice_areas` | Ana sayfadaki 9 çalışma alanı kartı ve detay penceresi. `published` kapalıysa görünmez; `sort_order` sırayı belirler. | `summary` kartta, `body` modalda gösterilir; kartlar ortalanmış düzendedir. |
-| `team_members` | Ekip kartları. `name`, `role`, `bio`, `photo`, `expertise`, `slug`. | `slug` zorunlu ve benzersiz (örn. `kurucu-ortak`); yalnız küçük harf/rakam/tire. `photo` yüklenebilir (JPEG/PNG/WebP, 5 MB); yüklenmezse amblem görünür. |
+| `practice_areas` | Ana sayfadaki 9 çalışma alanı kartı, detay penceresi ve `/calisma-alani/<slug>/` sayfası. `published` kapalıysa görünmez; `sort_order` sırayı belirler. | `summary` kartta, `body` modalda ve detay sayfasında gösterilir. |
+| `team_members` | Ekip kartları ve `/ekip/<slug>/` sayfaları. `name`, `role`, `bio`, `photo`, `expertise`, `slug`. | `slug` zorunlu ve benzersiz; `photo` yüklenebilir (JPEG/PNG/WebP, 5 MB); bio/uzmanlık detay sayfasını besler. |
 | `faq` | Sık sorulan sorular. `question`, `answer`, `sort_order`, `published`. | Akordeon ve `FAQPage` yapısal verisi bu kayıtlardan beslenir. |
-| `pages` | KVKK aydınlatma metni gibi serbest sayfalar. `slug` benzersiz olmalı. | Şu an boş; public sayfa rotası yok, metin eklenince bağlantı güncellenmeli. |
+| `pages` | `/kvkk/`, `/cerez-politikasi/`, `/gizlilik/` sayfaları. `slug`, `title`, `content`, `published`. | Üç sayfa hazır ama metinler **taslak**; her birinde hukuki inceleme uyarısı var. `slug` sabittir, değiştirmeyin. |
 
 `slug` alanı olan tüm kayıtlarda küçük harf, rakam ve tek tire kullanın. Geçersiz slug kaydı
 **400** hatasıyla reddedilir. `published` kapatıldığında kayıt public API'de görünmez.
+
+### Hukuki sayfalar ve çerez bildirimi
+
+**Collections → pages**
+
+- Üç kayıt vardır: `kvkk`, `cerez-politikasi`, `gizlilik`. Her biri `/kvkk/`,
+  `/cerez-politikasi/`, `/gizlilik/` adresinde yayınlanır ve footer'dan bağlanır.
+- İçerikler **taslaktır** ve sayfaların başında “TASLAK — yayın öncesi hukuki inceleme gerekir”
+  uyarısı görünür. Metinler avukat tarafından incelenip kesinleştirilene kadar uyarıyı kaldırmayın.
+- `content` alanı HTML kabul eder; izin verilen biçimlendirme korunur. `slug` sabittir; değiştirmek
+  sayfa adresini kırar.
+- Sayfa güncellenince “Son güncelleme” ve sitemap `lastmod` değeri yenilenir.
+
+Çerez bildirimi ziyaretçiye bir kez gösterilir ve seçim tarayıcıda
+`ulucinar-cookie-consent` anahtarıyla saklanır. Sitede analitik/reklam çerezi yoktur; yalnız
+zorunlu/teknik çerezler ve yerel depolama kullanılır. Analitik eklenirse hem çerez politikası hem
+bildirim metni güncellenmelidir.
 
 ## 9. Yedekleme
 
@@ -272,6 +321,9 @@ deneyin.
 | “Slug already exists” | Aynı `slug` başka kayıtta var. Benzersiz bir slug seçin. |
 | Form mesajı panele düşmüyor | Sunucu ve `/api/health` çalışıyor mu kontrol edin; form gönderiminde hata varsa tarayıcı konsoluna ve sunucu loglarına bakın. |
 | Form 400 hatası | KVKK onayı işaretlenmemiş ya da `kvkk_consent` gönderilmiyor. |
+| Randevu 400 hatası | KVKK onayı yok veya `preferred_date` geçmişte. Tarihi kontrol edin. |
+| Randevu/mesaj e-postası gelmiyor | E-posta gönderimi yapılandırılmadı; kayıtlar yalnız panelde. Resend/SMTP anahtarı sunucuda tanımlanmalı. |
+| Hukuki sayfa düzenlemesi görünmüyor | `pages` kaydının `published` olduğundan ve kaydedildiğinden emin olun; taslak uyarısı metnin parçasıdır. |
 | Form 429 hatası | Dakikada 5 gönderim sınırı aşıldı; bir dakika sonra tekrar deneyin. |
 | Telefon/adres değişmedi | `site_settings` kaydını kaydedin, sayfayı yenileyin; önbelleği temizleyin. |
 | Panel açılmıyor | Sunucu çalışmıyor veya adres yanlış. `./scripts/pocketbase-serve.sh` çıktısını kontrol edin. |
@@ -288,3 +340,19 @@ deneyin.
 - Yedekleri ve `pb_data/` klasörünü git deposuna, e-posta veya mesajlaşmaya koymayın.
 - Şüpheli girişleri **Logs** bölümünden kontrol edin; art arda başarısız girişlerde şifreyi
   değiştirin.
+
+## 12. Dış yapılandırma ve yayın öncesi
+
+- **E-posta gönderimi:** Form ve randevu kayıtları şu an yalnız panelde birikir. Bildirim
+  istiyorsanız sunucuda Resend veya SMTP anahtarı tanımlanmalıdır; anahtarı panele, repoya veya
+  dokümana yazmayın.
+- **Alan adı:** `site_settings.site_url` ve statik meta etiketleri gerçek alan adıyla
+  güncellenmeden yayına çıkmayın.
+- **Search Console / analitik / Google Business Profile:** yayın sonrası kurulmalı; analitik
+  eklenirse çerez politikası ve bildirimi güncellenmelidir.
+- **Hukuki metinler:** `/kvkk/`, `/cerez-politikasi/`, `/gizlilik/` taslaktır; avukat incelemesi
+  tamamlanana kadar uyarıyı kaldırmayın.
+- **Admin güvenliği:** güçlü şifre, mümkünse MFA ve proxy'de IP kısıtı/VPN.
+- **Yayın testi:** canlı alan adında `/`, `/makaleler/`, bir makale, `/calisma-alani/<slug>/`,
+  `/ekip/<slug>/`, `/randevu/`, `/rss.xml`, `/sitemap.xml` ve `/_/` adreslerini kontrol edin;
+  Lighthouse/Rich Results ölçümünü yayın sonrası yapın.
