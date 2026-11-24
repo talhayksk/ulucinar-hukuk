@@ -34,6 +34,9 @@ window.SITE_CONFIG = {
    */
   contactEndpoint: "/api/collections/contact_messages/records",
 
+  /** Appointment request endpoint (same-origin PocketBase collection). */
+  appointmentEndpoint: "/api/collections/appointments/records",
+
   site: {
     name: "ULUÇINAR Hukuk & Danışmanlık",
     url: "https://www.ulucinar.av.tr",

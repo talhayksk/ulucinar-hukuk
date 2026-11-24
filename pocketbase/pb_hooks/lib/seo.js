@@ -923,6 +923,11 @@ function renderPracticePage(template, record, allPractices, settings, siteUrl) {
   }
   html = html.split("<!-- practice:list -->").join(listItems.join("\n              "));
 
+  // Appointment CTA carries the practice slug for preselection.
+  html = html.split('href="/randevu/" data-appointment-area').join(
+    'href="/randevu/?area=' + encodeURIComponent(slug) + '" data-appointment-area'
+  );
+
   // Head: title / description / canonical / Open Graph.
   html = html.replace(/<title>[\s\S]*?<\/title>/i, function () {
     return "<title>" + escapeHtml(pageTitle) + "</title>";
@@ -1489,6 +1494,22 @@ function syncAll(app) {
     }
   }
 
+  // Appointment page: static template copied to /randevu/ with root-absolute URLs.
+  try {
+    var randevuTemplate = readText(publicDir() + "/randevu.html");
+    if (randevuTemplate.indexOf('id="appointmentForm"') === -1) {
+      warn('randevu.html is missing the appointment form marker; /randevu/ not generated');
+    } else {
+      var randevuHtml = rootifyHtml(randevuTemplate).replace(/<html([^>]*)>/i, function (match, attrs) {
+        return "<html" + stripAttr(attrs, "data-ssr") + ' data-ssr="1">';
+      });
+      writeText(publicDir() + "/randevu/index.html", randevuHtml);
+      summary.randevuGenerated = true;
+    }
+  } catch (err) {
+    warn("randevu.html not found - /randevu/ not generated");
+  }
+
   log("sync complete: " + summary.generated + " page(s) generated, " + summary.removed + " removed");
   return summary;
 }
@@ -1527,6 +1548,7 @@ function buildSitemap(app) {
   }
   entries.unshift({ loc: siteUrl + "/", lastmod: homeLastmod });
   entries.splice(1, 0, { loc: siteUrl + "/makaleler/", lastmod: homeLastmod });
+  entries.splice(2, 0, { loc: siteUrl + "/randevu/", lastmod: homeLastmod });
 
   var practices = publishedPractices(app);
   for (var p = 0; p < practices.length; p++) {

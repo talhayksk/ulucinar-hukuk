@@ -180,6 +180,12 @@ routerAdd("GET", "/gizlilik", function (e) {
 routerAdd("GET", "/sayfa.html", function (e) {
   return e.redirect(301, "/");
 });
+routerAdd("GET", "/randevu", function (e) {
+  return e.redirect(301, "/randevu/");
+});
+routerAdd("GET", "/randevu.html", function (e) {
+  return e.redirect(301, "/randevu/");
+});
 
 /* ------------------------------------------------------------------ *
  * Sitemap and robots

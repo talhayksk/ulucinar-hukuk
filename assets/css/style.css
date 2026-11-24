@@ -2943,3 +2943,58 @@ body.has-cookie-banner .to-top { display: none; }
   color: var(--gold-300);
   border-color: var(--gold-400);
 }
+
+/* ==================================================================== *
+ * Appointment request page (/randevu/)
+ * ==================================================================== */
+.appointment { padding-top: 56px; }
+.appointment__grid {
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+  gap: clamp(30px, 5vw, 64px);
+  align-items: start;
+}
+.appointment__heading {
+  margin-bottom: 12px;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 2.4vw, 1.8rem);
+  font-weight: 500;
+}
+.appointment__lead {
+  margin-bottom: 18px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.appointment__notes {
+  margin: 0 0 22px;
+  padding-left: 1.1em;
+  color: var(--muted);
+  font-size: .9rem;
+  line-height: 1.8;
+}
+.appointment__notes a { color: var(--gold-600); }
+.appointment__contact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.appointment__contact a {
+  color: var(--gold-600);
+  font-weight: 600;
+  text-decoration: none;
+}
+.appointment__form {
+  padding: clamp(22px, 3vw, 34px);
+  background: var(--white);
+  border: 1px solid rgba(27, 36, 48, .1);
+}
+.appointment__hint {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: .78rem;
+  line-height: 1.6;
+}
+@media (max-width: 900px) {
+  .appointment__grid { grid-template-columns: 1fr; }
+}

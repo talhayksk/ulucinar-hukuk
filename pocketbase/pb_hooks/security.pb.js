@@ -4,7 +4,8 @@
 //
 // Handlers run in isolated runtimes, so the helpers are loaded with require().
 // - articles / team_members: strict slug validation (+ sanitized body).
-// - contact_messages: KVKK consent required, inbox fields forced server-side.
+// - contact_messages / appointments: KVKK consent required, inbox fields forced
+//   server-side (status, consent_at), past appointment dates rejected.
 
 function guardArticleWrite(e) {
   const sanitize = require(__hooks + "/lib/sanitize.js")
@@ -83,3 +84,44 @@ function guardContactCreate(e) {
 }
 
 onRecordCreateRequest(guardContactCreate, "contact_messages")
+
+// Appointment requests: consent is mandatory, the inbox status is always "new",
+// the consent timestamp is server-side, and past dates are rejected.
+function guardAppointmentCreate(e) {
+  const record = e.record
+  if (!record) {
+    return e.next()
+  }
+
+  if (record.get("kvkk_consent") !== true) {
+    throw new BadRequestError("KVKK aydınlatma metni onayı gerekli.", {
+      kvkk_consent: new ValidationError(
+        "required",
+        "Randevu talebi göndermek için KVKK aydınlatma metnini onaylamanız gerekir."
+      ),
+    })
+  }
+
+  const preferred = String(record.getString("preferred_date") || "").trim()
+  if (preferred) {
+    const now = new Date()
+    const pad = (value) => (value < 10 ? "0" + value : String(value))
+    const today = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate())
+    if (preferred.slice(0, 10) < today) {
+      throw new BadRequestError("Geçmiş bir tarih için randevu talep edilemez.", {
+        preferred_date: new ValidationError(
+          "invalid",
+          "Lütfen bugün veya ilerisi için bir tarih seçin."
+        ),
+      })
+    }
+  }
+
+  record.set("kvkk_consent", true)
+  record.set("status", "new")
+  record.set("consent_at", new Date().toISOString().replace("T", " "))
+
+  return e.next()
+}
+
+onRecordCreateRequest(guardAppointmentCreate, "appointments")

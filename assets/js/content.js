@@ -563,6 +563,7 @@
 
     var title = $("#practiceModalTitle");
     var detail = $("#practiceModalDetail");
+    var appointment = $("#practiceModalCta");
     var summary = $("#practiceModalSummary");
     var body = $("#practiceModalBody");
     var error = $("#practiceModalError");
@@ -580,6 +581,12 @@
       detail.setAttribute(
         "href",
         record && record.slug ? "/calisma-alani/" + encodeURIComponent(record.slug) + "/" : "/#calisma-alanlari"
+      );
+    }
+    if (appointment) {
+      appointment.setAttribute(
+        "href",
+        record && record.slug ? "/randevu/?area=" + encodeURIComponent(record.slug) : "/randevu/"
       );
     }
     if (icon) { icon.setAttribute("href", practiceIcon(record && record.icon)); }
