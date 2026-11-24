@@ -16,6 +16,10 @@ Environment=PB_HTTP=127.0.0.1:8090
 Environment=PB_ORIGINS=https://www.ulucinar.av.tr
 # Optional: put deployment-specific values (never passwords/tokens) here.
 EnvironmentFile=-/etc/ulucinar/pocketbase.env
+# Optional email notifications (Resend) - values go in the env file above,
+# never in this unit: RESEND_API_KEY, MAIL_FROM, MAIL_TO and the optional
+# RESEND_API_URL (test/mock override). Missing values disable notifications;
+# the forms keep working.
 
 # The repository's serve script resolves all paths from its own location:
 #   /opt/ulucinar/scripts/pocketbase-serve.sh
