@@ -53,10 +53,11 @@
       var visible = 0;
 
       cards.forEach(function (card) {
-        var category = card.getAttribute("data-category") || "";
-        var haystack = card.getAttribute("data-search") || "";
+        var category = fold(card.getAttribute("data-category") || "");
+        var haystack = fold(card.getAttribute("data-search") || "");
+        var active = fold(activeCategory);
 
-        var matchesCategory = activeCategory === "all" || category === activeCategory;
+        var matchesCategory = active === "all" || category === active;
         var matchesTerms = terms.every(function (term) {
           return haystack.indexOf(term) !== -1;
         });

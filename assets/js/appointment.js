@@ -115,9 +115,11 @@
       return form.elements[name] || null;
     }
 
+    var ERROR_IDS = { preferred_date: "date" };
+
     function setError(name, message) {
       var field = fieldByName(name);
-      var error = document.getElementById("ap-err-" + name);
+      var error = document.getElementById("ap-err-" + (ERROR_IDS[name] || name));
       if (error) { error.textContent = message; }
       if (field) {
         if (message) { field.setAttribute("aria-invalid", "true"); }

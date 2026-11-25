@@ -154,6 +154,7 @@ button { cursor: pointer; }
   line-height: 1.2;
   text-transform: uppercase;
   text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
   transition: background .3s ease, color .3s ease, border-color .3s ease, transform .2s ease;
 }
@@ -289,12 +290,15 @@ button { cursor: pointer; }
 .header__actions {
   display: flex;
   align-items: center;
+  flex: 0 0 auto;
   gap: 14px;
 }
 
 .nav__list {
   display: flex;
   align-items: center;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
   gap: 26px;
 }
 
@@ -316,6 +320,7 @@ button { cursor: pointer; }
   line-height: 1;
   text-transform: uppercase;
   text-decoration: none;
+  white-space: nowrap;
   transition: color .25s ease;
 }
 
@@ -1883,6 +1888,13 @@ html.js.intro-done .hero__slides {
 /* ==========================================================================
    Responsive
    ========================================================================== */
+
+@media (max-width: 1440px) {
+  .header__inner { gap: 22px; }
+  .nav__list { gap: 20px; }
+  .nav__link { font-size: .68rem; letter-spacing: .13em; }
+  .btn--sm { padding: 10px 16px; }
+}
 
 @media (max-width: 1180px) {
   .nav__list { gap: 14px; }
