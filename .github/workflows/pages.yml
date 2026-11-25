@@ -1,9 +1,10 @@
-name: Deploy to GitHub Pages
+name: Static preview (GitHub Pages)
 
+# Static preview only. The production site must be served by PocketBase
+# (`scripts/pocketbase-serve.sh`) for the admin panel, forms, scheduled content
+# and server-rendered article/practice/team routes. This workflow is manual on
+# purpose: do not auto-deploy a static copy that cannot run PocketBase.
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
