@@ -1,4 +1,4 @@
-# ULUÇINAR Hukuk & Danışmanlık — website and PocketBase CMS
+# ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık — website and PocketBase CMS
 
 Marketing site for a Turkish law firm in İzmit/Kocaeli: a static, no-build front end (Turkish UI)
 served next to a self-hosted [PocketBase](https://pocketbase.io/) instance that provides the content
@@ -229,10 +229,11 @@ superuser-only. Empty optional fields fall back to the static markup.
 | Home copy | `hero_note`, `hero_title`, `hero_lead`, `about_title`, `about_lead`, `about_body`, `stats`, `values` |
 | SEO | `site_url`, `seo_title`, `seo_description`, `default_seo_title`, `default_seo_description`, `og_image_url`, `google_site_verification` |
 
-`stats` is a JSON array, for example `[{"value":"25+","label":"Yıllık deneyim"}]`. `values` is a JSON
+`stats` is a JSON array, for example `[{"value":"12+","label":"Yıllık deneyim"}]`. `values` is a JSON
 array of `{"title":"...","text":"..."}`. Keep the key names; invalid JSON is rejected by the admin
 UI. Statistics are content, not decoration — replace the current figures with verified ones or
-remove them.
+remove them. The hero eyebrow (`hero_note`) example is
+`İzmit · Uluçınar Hukuk, Arabuluculuk ve Danışmanlık`.
 
 ### Article fields
 
@@ -372,6 +373,11 @@ is a later phase, not part of this release.
 - Self-hosted, responsive images with `srcset`/`sizes` and a 1200×630 local Open Graph image.
 - No iframe map: the address block links out to Google Maps (`map_url`), keeping `frame-src 'none'`.
 
+**Example home metadata.** Title: `ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık | İzmit/Kocaeli`.
+Description: `ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık: İzmit/Kocaeli merkezli; aile, ceza,
+ticaret, iş, gayrimenkul ve miras hukukunda danışmanlık, avukatlık ve arabuluculuk hizmeti.` These
+values live in `site_settings.seo_title` / `seo_description` and are applied to the home page.
+
 **Domain.** The canonical origin is currently `https://www.ulucinar.av.tr` and is **not confirmed**.
 It appears in:
 
@@ -408,6 +414,10 @@ absent until real coordinates and hours are supplied.
 - `assets/logo/logo-siyah-beyaz.pdf` is the original supplied logo and the source of truth. Gold
   derivatives (`ulucinar-gold.svg/png`, `ulucinar-emblem-gold.svg`) and the favicon set were produced
   from it; the intro uses inline SVG/PNG layers, so it never flashes a fallback font.
+- **Brand-name note:** the supplied logo SVG still carries the old subtitle
+  `HUKUK & DANIŞMANLIK`. The new name is `ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık`; replace the
+  SVG/PNG lockups when the updated logo artwork is supplied. File names and the header/splash
+  structure stay unchanged.
 - Regeneration is manual: rasterise/vectorise the PDF (e.g. `pdftocairo`), re-apply the gold gradient
   in a vector editor, then export the sizes used by the header, splash and social image. There is no
   regeneration script in the repo, so these steps are **not verified** here.
@@ -527,7 +537,7 @@ Real and already in the site:
 | Domain (canonical/OG/sitemap) — currently `https://www.ulucinar.av.tr` | `site_settings.site_url`, `assets/js/config.js` → `site.url`, static meta tags |
 | E-mail — currently `info@ulucinar.av.tr` placeholder | `site_settings.email`, static markup, `LegalService` JSON-LD |
 | Working hours — currently “Pazartesi – Cuma 09.00 – 18.30” | `site_settings.working_hours` and static fallbacks |
-| Statistics `25+`, `1.200+`, `%100` | `site_settings.stats` and the static trust strip — unverified claims; replace or remove |
+| Statistics `12+`, `1.200+`, `%100` | `site_settings.stats` and the static trust strip — unverified claims; replace or remove |
 | Team identities, bios and photos | `team_members` (`name`, `role`, `bio`, `photo`); some seeded names are placeholders |
 | Legal review and final text of `/kvkk/`, `/cerez-politikasi/`, `/gizlilik/` | `pages` (`content`); current text carries a visible draft warning |
 | Social profiles | `site_settings.socials`, `same_as`, footer links |
@@ -595,7 +605,7 @@ through a full QA cycle.
 
 ## 11. License and ownership
 
-Private, proprietary project for the client (ULUÇINAR Hukuk & Danışmanlık). No open-source license is
+Private, proprietary project for the client (ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık). No open-source license is
 granted for the site code or brand assets. Typography is used under the SIL Open Font License
 (licences in `assets/fonts/`); photography is used under the Pexels License (source record in
 `assets/img/CREDITS.md`). Replace these terms only if the client explicitly chooses a different

@@ -1,5 +1,5 @@
 /**
- * ULUÇINAR Hukuk & Danışmanlık — site configuration.
+ * ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık — site configuration.
  *
  * This file is the single place for deployment values. It is intentionally
  * free of secrets: only public endpoints and placeholder content live here.
@@ -38,7 +38,7 @@ window.SITE_CONFIG = {
   appointmentEndpoint: "/api/collections/appointments/records",
 
   site: {
-    name: "ULUÇINAR Hukuk & Danışmanlık",
+    name: "ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık",
     url: "https://www.ulucinar.av.tr",
     locale: "tr_TR"
   },

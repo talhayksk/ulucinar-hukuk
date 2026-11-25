@@ -1,5 +1,5 @@
 /**
- * ULUÇINAR Hukuk & Danışmanlık — PocketBase content binding.
+ * ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık — PocketBase content binding.
  *
  * Responsibilities:
  *  - fill [data-pb-setting] / [data-pb-href] elements from site_settings;
@@ -211,7 +211,7 @@
   }
 
   function articleAuthor(record) {
-    return record.author || "ULUÇINAR Hukuk & Danışmanlık";
+    return record.author || "ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık";
   }
 
   /* ------------------------------------------------------------------ *
@@ -757,43 +757,42 @@
    * Team members
    * ------------------------------------------------------------------ */
 
+  function buildTeamCard(record) {
+    var name = escapeHtml(record.name || "");
+    var role = escapeHtml(record.role || "");
+    var expertise = normalizeArray(record.expertise)
+      .map(function (item) { return String(item || ""); })
+      .filter(function (item) { return !!item; })
+      .map(escapeHtml)
+      .join(" · ");
+    var slug = String(record.slug || "");
+    var href = slug ? "/ekip/" + encodeURIComponent(slug) + "/" : "#";
+    var photo = record.photo && global.PB.fileUrl ? global.PB.fileUrl(record, record.photo) : "";
+    var media = photo
+      ? '<img class="team-card__photo" src="' + escapeHtml(photo) + '" alt="' + name +
+        '" width="236" height="236" loading="lazy" decoding="async">'
+      : '<img src="/assets/logo/ulucinar-emblem-gold.svg?v=2" alt="" width="356" height="168" loading="lazy" decoding="async">';
+
+    return '<a class="team-card reveal is-visible" href="' + escapeHtml(href) + '">' +
+      '<div class="team-card__monogram" aria-hidden="true">' + media + "</div>" +
+      "<h3>" + name + "</h3>" +
+      '<p class="team-card__role">' + role + "</p>" +
+      '<p class="team-card__areas">' + expertise + "</p>" +
+      '<span class="team-card__more">Profili gör</span>' +
+    "</a>";
+  }
+
   function initTeamMembers() {
-    var cards = $$(".team-card[data-pb-id]");
-    if (!cards.length || !global.PB) { return; }
+    var grid = $(".team-grid");
+    if (!grid || !global.PB) { return; }
 
     global.PB.getTeamMembers().then(function (records) {
+      // Only published records from PocketBase; never leave a placeholder card
+      // behind when the API answers. Empty/failed responses keep the fallback.
       if (!records || !records.length) { return; }
-
-      var bySlug = {};
-      records.forEach(function (record) { bySlug[record.slug] = record; });
-
-      cards.forEach(function (card) {
-        var record = bySlug[card.getAttribute("data-pb-id")];
-        if (!record) { return; }
-
-        var name = $("h3", card);
-        var role = $(".team-card__role", card);
-        var areas = $(".team-card__areas", card);
-        var monogram = $(".team-card__monogram", card);
-
-        if (name && record.name) { name.textContent = record.name; }
-        if (role && record.role) { role.textContent = record.role; }
-
-        var expertise = normalizeArray(record.expertise);
-        if (areas && expertise.length) {
-          areas.textContent = expertise.join(" · ");
-        }
-
-        if (card.tagName === "A" && record.slug) {
-          card.setAttribute("href", "/ekip/" + encodeURIComponent(record.slug) + "/");
-        }
-
-        var photo = record.photo && global.PB.fileUrl ? global.PB.fileUrl(record, record.photo) : "";
-        if (photo && monogram) {
-          monogram.innerHTML = '<img class="team-card__photo" src="' + escapeHtml(photo) +
-            '" alt="' + escapeHtml(record.name || "") + '" width="236" height="236" loading="lazy" decoding="async">';
-        }
-      });
+      grid.innerHTML = records.map(buildTeamCard).join("");
+    }).catch(function () {
+      // Keep the static fallback (two active lawyers).
     });
   }
 
@@ -900,7 +899,7 @@
       },
       "publisher": {
         "@type": "Organization",
-        "name": (config.site && config.site.name) || "ULUÇINAR Hukuk & Danışmanlık"
+        "name": (config.site && config.site.name) || "ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık"
       },
       "mainEntityOfPage": canonical
     };
@@ -948,7 +947,7 @@
       if (category) { category.textContent = "Makaleler"; }
       if (crumb) { crumb.textContent = "Makale"; }
       if (meta) { meta.hidden = true; }
-      document.title = "İçerik yüklenemedi | ULUÇINAR Hukuk & Danışmanlık";
+      document.title = "İçerik yüklenemedi | ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık";
     }
 
     function showMissingState() {
@@ -958,7 +957,7 @@
       if (category) { category.textContent = "Makaleler"; }
       if (crumb) { crumb.textContent = "Makale bulunamadı"; }
       if (meta) { meta.hidden = true; }
-      document.title = "Makale bulunamadı | ULUÇINAR Hukuk & Danışmanlık";
+      document.title = "Makale bulunamadı | ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık";
     }
 
     function render(record) {
@@ -1013,7 +1012,7 @@
         body.innerHTML = sanitizeHtml(html);
       }
 
-      document.title = articleTitle + " | ULUÇINAR Hukuk & Danışmanlık";
+      document.title = articleTitle + " | ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık";
       if (description) {
         setMeta('meta[name="description"]', description);
         setMeta('meta[property="og:description"]', description);

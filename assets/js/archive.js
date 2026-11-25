@@ -1,5 +1,5 @@
 /**
- * ULUÇINAR Hukuk & Danışmanlık — article archive filtering.
+ * ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık — article archive filtering.
  *
  * The archive page is fully server-rendered: every published article card is
  * already in the DOM (works without JavaScript). This script only filters the

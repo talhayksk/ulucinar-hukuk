@@ -1,4 +1,4 @@
-# PocketBase Yönetim Rehberi — ULUÇINAR Hukuk & Danışmanlık
+# PocketBase Yönetim Rehberi — ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık
 
 Bu rehber, site içeriğini PocketBase yönetim panelinden nasıl güncelleyeceğinizi anlatır.
 Panel İngilizce arayüzlüdür; alan adları kodla aynıdır, açıklamalar Türkçedir.
@@ -90,6 +90,12 @@ Bu alanlar sunucu tarafında oluşturulan makale sayfasında (`/makale/<slug>/`)
 açıklama ve sosyal paylaşım etiketlerini besler. Sitemap ve robots dosyaları da yayınlanmış
 makalelerden otomatik üretilir.
 
+Örnek ana sayfa değerleri:
+
+- `seo_title`: `ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık | İzmit/Kocaeli`
+- `seo_description`: `ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık: İzmit/Kocaeli merkezli; aile,
+  ceza, ticaret, iş, gayrimenkul ve miras hukukunda danışmanlık, avukatlık ve arabuluculuk hizmeti.`
+
 ## 5. Yayınlama ve geri çekme
 
 1. Makaleyi kaydedin (taslak olarak kalabilir).
@@ -164,11 +170,11 @@ kullanır. Kayıt sayısı 1'den fazlaysa fazlalıkları silin.
 | `address` | Açık adres: `Karabaş Mh. Cumhuriyet Blv. No:177/2, İzmit / KOCAELİ` |
 | `working_hours` | Çalışma saatleri (şu an yer tutucu) |
 | `socials` | JSON: `{"instagram":"https://...","linkedin":"https://..."}` |
-| `hero_note` | Hero üstündeki kısa etiket |
+| `hero_note` | Hero üstündeki kısa etiket; ör. `İzmit · Uluçınar Hukuk, Arabuluculuk ve Danışmanlık` |
 | `hero_title` / `hero_lead` | Hero başlığı ve açıklaması (düz metin) |
 | `about_title` / `about_lead` | Hakkımızda başlığı ve giriş paragrafı |
 | `about_body` | Hakkımızda HTML metni |
-| `stats` | JSON dizi: `[{"value":"25+","label":"Yıllık deneyim"}]` |
+| `stats` | JSON dizi: `[{"value":"12+","label":"Yıllık deneyim"}]` |
 | `values` | JSON dizi: `[{"title":"Mesleki Sır","text":"..."}]` |
 | `footer_note` | Footer yasal not |
 | `site_url` | Sitenin tam adresi, sonunda `/` olmadan: `https://www.ulucinar.av.tr` |
@@ -185,7 +191,7 @@ kullanır. Kayıt sayısı 1'den fazlaysa fazlalıkları silin.
 
 ```json
 [
-  {"value": "25+", "label": "Yıllık deneyim"},
+  {"value": "12+", "label": "Yıllık deneyim"},
   {"value": "1.200+", "label": "Takip edilen dosya"}
 ]
 ```

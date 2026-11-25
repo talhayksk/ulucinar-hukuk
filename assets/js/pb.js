@@ -1,5 +1,5 @@
 /**
- * ULUÇINAR Hukuk & Danışmanlık — minimal PocketBase client.
+ * ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık — minimal PocketBase client.
  *
  * No SDK, no dependencies. Every method degrades gracefully: errors return
  * null/[] and set PB.lastError so callers can distinguish "not found" from

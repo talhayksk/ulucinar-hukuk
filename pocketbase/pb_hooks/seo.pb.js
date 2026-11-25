@@ -45,7 +45,7 @@ function seoServeArticlePage(e) {
   var path = String(e.request.requestURI || "").split("?")[0];
 
   if (!slug) {
-    return e.redirect(301, "/#makaleler");
+    return e.redirect(301, "/makaleler/");
   }
 
   var html;

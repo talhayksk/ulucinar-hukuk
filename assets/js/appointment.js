@@ -1,5 +1,5 @@
 /**
- * ULUÇINAR Hukuk & Danışmanlık — appointment request form.
+ * ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık — appointment request form.
  *
  * Sends a request to PocketBase (no calendar reservation). The practice area
  * list is hydrated from practice_areas when available; the static options in
@@ -190,7 +190,7 @@
         practice_area: areaSelect ? areaSelect.value : "",
         preferred_time: fieldByName("preferred_time") ? fieldByName("preferred_time").value : "Fark etmez",
         message: fieldByName("message") ? fieldByName("message").value.trim() : "",
-        kvkk_consent: true,
+        kvkk_consent: !!(fieldByName("kvkk") && fieldByName("kvkk").checked),
         source: "website",
         page: global.location.pathname,
       };

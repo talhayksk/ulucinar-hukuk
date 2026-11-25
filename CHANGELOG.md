@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2026-11-23
 
-First release candidate: static marketing site for ULUÇINAR Hukuk & Danışmanlık
+First release candidate: static marketing site for ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık
 plus a PocketBase 0.42.3 content backend, server-rendered article pages,
 technical SEO and the operational tooling needed to host it.
 
@@ -118,6 +118,8 @@ technical SEO and the operational tooling needed to host it.
   `404` (verified: `/api/nope`, `/assets/nope`, `/nope`).
 - Article covers stored as external URLs are blocked by the image CSP; upload
   them to the `cover` file field to display them.
+- The logo artwork still carries the old `HUKUK & DANIŞMANLIK` subtitle; replace the SVG/PNG
+  lockups when the updated `ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık` logo is supplied.
 - Lighthouse and Rich Results testing were not run without a live domain;
   Search Console verification and sitemap submission are still pending.
 

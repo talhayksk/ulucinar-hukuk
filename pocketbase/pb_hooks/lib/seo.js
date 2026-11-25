@@ -559,7 +559,7 @@ function applySiteSettings(html, settings) {
 function renderArticlePage(template, record, settings, siteUrl) {
   var slug = get(record, "slug");
   var title = get(record, "title") || slug;
-  var firm = get(settings, "firm_name") || "ULUÇINAR Hukuk & Danışmanlık";
+  var firm = get(settings, "firm_name") || "ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık";
   var pageTitle = get(record, "seo_title") || title + " | " + firm;
   var description =
     get(record, "seo_description") ||
@@ -650,7 +650,7 @@ function renderArticlePage(template, record, settings, siteUrl) {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Anasayfa", item: siteUrl + "/" },
-      { "@type": "ListItem", position: 2, name: "Makaleler", item: siteUrl + "/#makaleler" },
+      { "@type": "ListItem", position: 2, name: "Makaleler", item: siteUrl + "/makaleler/" },
       { "@type": "ListItem", position: 3, name: title, item: canonical },
     ],
   };
@@ -826,10 +826,10 @@ function archiveCardHtml(record, siteUrl) {
 }
 
 function renderArchivePage(template, articles, settings, siteUrl) {
-  var firm = get(settings, "firm_name") || "ULUÇINAR Hukuk & Danışmanlık";
+  var firm = get(settings, "firm_name") || "ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık";
   var pageTitle = "Makaleler | " + firm;
   var description =
-    "ULUÇINAR Hukuk & Danışmanlık makale arşivi: aile, ceza, ticaret, iş, gayrimenkul, " +
+    "ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık makale arşivi: aile, ceza, ticaret, iş, gayrimenkul, " +
     "miras ve icra hukuku üzerine sade ve bilgilendirici yazılar.";
   var canonical = siteUrl + "/makaleler/";
   var image = get(settings, "og_image_url") || siteUrl + "/assets/img/og-cover.jpg";
@@ -950,7 +950,7 @@ function practiceIconHref(name) {
 function renderPracticePage(template, record, allPractices, settings, siteUrl) {
   var slug = get(record, "slug");
   var title = get(record, "title") || slug;
-  var firm = get(settings, "firm_name") || "ULUÇINAR Hukuk & Danışmanlık";
+  var firm = get(settings, "firm_name") || "ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık";
   var summary = get(record, "summary");
   var bodyHtml = sanitizeBody(get(record, "body"));
   var canonical = siteUrl + "/calisma-alani/" + encodeURIComponent(slug) + "/";
@@ -1063,7 +1063,7 @@ function renderTeamPage(template, record, settings, siteUrl) {
   var slug = get(record, "slug");
   var name = get(record, "name") || slug;
   var role = get(record, "role");
-  var firm = get(settings, "firm_name") || "ULUÇINAR Hukuk & Danışmanlık";
+  var firm = get(settings, "firm_name") || "ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık";
   var expertise = parseJson(record.get("expertise"));
   if (!expertise || typeof expertise.length !== "number") {
     expertise = [];
@@ -1075,7 +1075,7 @@ function renderTeamPage(template, record, settings, siteUrl) {
   var pageTitle = name + (role ? " — " + role : "") + " | " + firm;
   var bioText = plainTextFromHtml(bioHtml);
   var fallbackBio =
-    name + (role ? ", " + role : "") + " olarak ULUÇINAR Hukuk & Danışmanlık bünyesinde görev yapmaktadır." +
+    name + (role ? ", " + role : "") + " olarak ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık bünyesinde görev yapmaktadır." +
     (expertise.length ? " Uzmanlık alanları: " + expertise.join(", ") + "." : "");
   var description = clampText(bioText || fallbackBio, 155);
   var image = photoPath
@@ -1186,7 +1186,7 @@ function renderTeamPage(template, record, settings, siteUrl) {
 
 function renderPagePage(template, record, settings, siteUrl, urlPath) {
   var title = get(record, "title") || get(record, "slug");
-  var firm = get(settings, "firm_name") || "ULUÇINAR Hukuk & Danışmanlık";
+  var firm = get(settings, "firm_name") || "ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık";
   var canonical = siteUrl + urlPath;
   var pageTitle = title + " | " + firm;
   var rawContent = get(record, "content");
@@ -1697,10 +1697,10 @@ function rssDate(value) {
 function buildRss(app) {
   var settings = loadSettings(app);
   var siteUrl = resolveSiteUrl(settings);
-  var firm = get(settings, "firm_name") || "ULUÇINAR Hukuk & Danışmanlık";
+  var firm = get(settings, "firm_name") || "ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık";
   var channelDescription =
     get(settings, "default_seo_description") ||
-    "ULUÇINAR Hukuk & Danışmanlık makaleleri.";
+    "ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık makaleleri.";
   var articles = publishedArticles(app);
 
   var items = [];
@@ -1765,7 +1765,7 @@ function sendNotFound(e) {
     '<!doctype html><html lang="tr"><head><meta charset="utf-8">' +
       '<meta name="viewport" content="width=device-width, initial-scale=1">' +
       '<meta name="robots" content="noindex, follow">' +
-      "<title>Sayfa bulunamadı | ULUÇINAR Hukuk &amp; Danışmanlık</title></head>" +
+      "<title>Sayfa bulunamadı | ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık</title></head>" +
       '<body><h1>Sayfa bulunamadı</h1><p>Bu adrese ait yayımlanmış bir makale bulunmuyor. ' +
       '<a href="/">Anasayfaya dönün</a>.</p></body></html>'
   );

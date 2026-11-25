@@ -93,13 +93,24 @@ function emailSend(cfg, payload, label) {
   }
 
   if (response.statusCode < 200 || response.statusCode >= 300) {
-    var bodyText = "";
+    // Never log the response body: provider errors can echo the recipient or
+    // the message. Only the HTTP status and the provider error name/code.
+    var detail = "";
     try {
-      bodyText = toString(response.body);
+      var payload = response.json || null;
+      var error = payload && payload.error ? payload.error : payload;
+      var name = error && error.name ? String(error.name) : "";
+      var code = error && error.code ? String(error.code) : "";
+      detail = [name, code].filter(function (value) { return !!value; }).join(" ");
     } catch (err) {
-      bodyText = "";
+      detail = "";
     }
-    emailLog(label + " rejected: HTTP " + response.statusCode + " " + bodyText.slice(0, 200));
+    emailLog(
+      label +
+        " rejected: HTTP " +
+        response.statusCode +
+        (detail ? " " + detail : "")
+    );
     return false;
   }
 
@@ -128,17 +139,49 @@ function emailAutoReply(cfg, name, email, intro) {
     "<p>" + greeting + intro + "</p>" +
     '<p style="margin:16px 0">Talebiniz büro tarafından değerlendirilecek ve en kısa sürede size dönüş yapılacaktır.</p>' +
     '<p style="margin:0;color:#5c6672;font-size:13px">Bu e-posta otomatik olarak gönderilmiştir; yanıtlamanız gerekmez.</p>' +
-    '<p style="margin:18px 0 0;color:#081422;font-size:13px">ULUÇINAR Hukuk &amp; Danışmanlık<br>' +
+    '<p style="margin:18px 0 0;color:#081422;font-size:13px">ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık<br>' +
     "Karabaş Mh. Cumhuriyet Blv. No:177/2, İzmit / KOCAELİ<br>" +
     "+90 (501) 943 63 41 · info@ulucinar.av.tr</p>" +
     "</div>";
   return {
     from: cfg.from,
     to: [email],
-    subject: "Talebiniz alındı — ULUÇINAR Hukuk & Danışmanlık",
+    subject: "Talebiniz alındı — ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık",
     html: html,
     reply_to: cfg.to,
   };
+}
+
+var AUTO_REPLY_WINDOW_MS = 10 * 60 * 1000;
+
+/* At most one auto-reply per address in a rolling 10 minute window. */
+function emailAutoReplyAllowed(email) {
+  var address = String(email || "").trim().toLowerCase();
+  if (!address) {
+    return false;
+  }
+  try {
+    var store = $app.store();
+    var key = "email:auto-reply:" + address;
+    var now = Date.now();
+    var last = Number(store.get(key) || 0);
+    if (last && now - last < AUTO_REPLY_WINDOW_MS) {
+      return false;
+    }
+    store.set(key, now);
+    return true;
+  } catch (err) {
+    // Shared store unavailable: fail open so the visitor still gets a reply.
+    return true;
+  }
+}
+
+function emailSendAutoReply(cfg, payload, email, label) {
+  if (!emailAutoReplyAllowed(email)) {
+    emailLog(label + " skipped (throttled)");
+    return false;
+  }
+  return emailSend(cfg, payload, label);
 }
 
 function emailReady(cfg) {
@@ -184,7 +227,7 @@ function sendContactEmails(record) {
       email,
       "Web sitesi iletişim formu üzerinden ilettiğiniz mesaj büroya ulaştı."
     );
-    emailSend(cfg, reply, "contact auto-reply");
+    emailSendAutoReply(cfg, reply, email, "contact auto-reply");
   }
 }
 
@@ -227,7 +270,7 @@ function sendAppointmentEmails(record) {
       email,
       "Randevu talebiniz büroya ulaştı."
     );
-    emailSend(cfg, reply, "appointment auto-reply");
+    emailSendAutoReply(cfg, reply, email, "appointment auto-reply");
   }
 }
 

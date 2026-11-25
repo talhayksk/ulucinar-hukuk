@@ -1,5 +1,5 @@
 /**
- * ULUÇINAR Hukuk & Danışmanlık — interactions.
+ * ULUÇINAR Hukuk, Arabuluculuk ve Danışmanlık — interactions.
  * Vanilla JS, no dependencies. Every feature degrades safely without JS.
  */
 (function () {
@@ -854,8 +854,8 @@
     banner.setAttribute("aria-label", "Çerez bilgilendirmesi");
     banner.innerHTML =
       '<div class="cookie-banner__inner">' +
-        '<p class="cookie-banner__text">Bu sitede yalnızca <strong>zorunlu ve teknik çerezler</strong> ile ' +
-          'tarayıcı yerel depolaması (localStorage) kullanılır; analitik veya reklam çerezi yoktur. ' +
+        '<p class="cookie-banner__text">Yalnızca <strong>zorunlu çerezler</strong> ve yerel depolama kullanılır; ' +
+          'analytics varsayılan olarak kapalıdır, onaylarsanız Plausible yüklenir. ' +
           'Ayrıntılar için <a href="/cerez-politikasi/">Çerez Politikası</a>.</p>' +
         '<div class="cookie-banner__actions">' +
           '<button type="button" class="btn btn--gold btn--sm" data-cookie-choice="accepted">Kabul et</button>' +
