@@ -1,0 +1,13 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=ULUÇINAR Siteyi Başlat
+Comment=Yerel ULUÇINAR Hukuk sitesini ve PocketBase panelini başlatır
+Exec="/home/talha/Projeler/avukat projesi/baslat.sh"
+Path=/home/talha/Projeler/avukat projesi
+Icon=utilities-terminal
+Terminal=true
+StartupNotify=false
+Categories=Development;
+Keywords=ulucinar;pocketbase;site;hukuk;
